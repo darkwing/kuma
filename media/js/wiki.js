@@ -42,6 +42,7 @@
             initMetadataEditButton();
             initSaveAndEditButtons();
             initArticlePreview();
+            initParentField();
             // initTitleAndSlugCheck();
             // initDrafting();
         }
@@ -744,6 +745,57 @@
             return false;
         });
     }
+    
+    /*
+     *  This is the parent field ** ONLY WORKS FOR "NEW" RIGHT NOW **
+     */
+    function initParentField() { // "parent_topic" is the name
+        var $parentSelect = $("#id_parent_topic"),
+            $selectLI = $parentSelect.parent(),
+            cache = {
+                keys: {},
+                terms: {}
+            },
+            lastXHR;
+        
+        // Create the INPUT, inject after the parentSelect
+        var $input = $("<input type='text' />").appendTo($selectLI);
+        
+        // Create a hidden input we'll be 
+        var $hiddenInput = $("<input type='hidden' name='parent_topic' />").appendTo($selectLI);
+        
+        // Create an autosuggest for the parent
+        $input.autocomplete({
+            minLength: 3,
+            source: function(request, response) {
+                var term = request.term.toLowerCase();
+                if(cache.terms[term]) {
+                    response(cache.terms[term]);
+                    return;
+                }
+                
+                lastXHR = $.toJSON(URL, request, function(data, status, xhr) {
+                    $.each(data, function() {
+                        cache.keys[this.label.toLowerCase()] = this;
+                    });
+                    cache[term] = data;
+                    if(xhr === lastXHR) {
+                        response(data);
+                    }
+                });
+            },
+            select: function(event, ui) {
+                $hiddenInput.val(ui.item.id);
+            }
+        });
+        
+        // Add a keyup event to the input so the user doesn't *have* to
+        $input.on("keyup", function() {
+            console.warn(this);
+        });
+        
+    }
+     
 
     /*
      * Ajaxify the Helpful/NotHelpful voting form on Document page
