@@ -103,10 +103,13 @@ class DocumentForm(forms.ModelForm):
                                  label=_lazy(u'Category:'),
                                  help_text=_lazy(u'Type of article'),
                                  widget=forms.HiddenInput())
-
-    parent_topic = forms.ModelChoiceField(queryset=Document.objects.all(),
-                                          required=False,
-                                          label=_lazy(u'Parent:'))
+    
+    parent_topic = StrippedCharField(min_length=2, max_length=255,
+                             widget=forms.TextInput(),
+                             required=False,
+                             help_text=_lazy(u'Parent Article URL'),
+                             label=_lazy(u'Parent:'))
+    
 
     locale = forms.CharField(widget=forms.HiddenInput())
 
