@@ -753,8 +753,11 @@
         // Create an autosuggest for the parent
         jQuery("#id_parent_topic").mozillaAutocomplete({
             autocompleteUrl: $("#autosuggestTitleUrl").attr("data-url"),
-            select: function(event, ui) {
-                // What to do when selected
+            labelField: "href",
+            buildRequest: function(req) {
+                req.searchBy = "slug";
+                
+                return req;
             }
         });
     }

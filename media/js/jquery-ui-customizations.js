@@ -2,7 +2,7 @@
 	Customizations to jQuery UI's autocomplete widget for better use in
 	"locking in" a value
 */
-(function() {
+(function($) {
 	
     // Create our own widget
     $.widget("ui.mozillaAutocomplete", $.ui.autocomplete, {
@@ -15,7 +15,14 @@
 			onDeselect: function(oldSelection){},
 			autocompleteURL: "",
 			styleElement: null,
-			minLength: 3
+			minLength: 3,
+			buildRequest: function(req) {
+				return req;
+			},
+			buildResponse: function(resp) {
+				resp.label = title;
+			},
+			labelField: "title"
 		},
 		
 		// Create a cache - make this a 
@@ -105,41 +112,54 @@
 			
 			
 			var oldSource = this.source;
-			this.source = function(request, response) {
-				// Put the term in lowercase for caching purposes
-				var term = request.term.toLowerCase();
-				
-				// Modify the response;  if there are matches and they've blurred, pick the first
-				var originalResponse = response;
-				response = function(data) {
-					originalResponse.call(self, data);
+			this.source = $.isArray(this.options.source) ?
+				function(request, response) {
+					assignLabel(self.options.source);
+					response($.ui.autocomplete.filter(self.options.source, request.term));
+				} :
+				function(request, response) {
+					// Format the request
+					request = this.options.buildRequest(request);
 					
-					if(data.length && cache.keys[term]) {
-						// Set the selection
-						self.options.select.call(self, null, { item: cache.keys[term] }, true);
+					// Put the term in lowercase for caching purposes
+					var term = request.term.toLowerCase();
+					
+					// Modify the response;  if there are matches and they've blurred, pick the first
+					var originalResponse = response;
+					response = function(data) {
+						originalResponse.call(self, data);
+						
+						if(data.length && cache.keys[term]) {
+							// Set the selection
+							self.options.select.call(self, null, { item: cache.keys[term] }, true);
+						}
+					};
+					
+					// Search the cache for the results first;  if found, return it
+					if(cache.terms[term]) {
+						response(cache.terms[term]);
+						return;
 					}
-				};
-				
-				// Search the cache for the results first;  if found, return it
-				if(cache.terms[term]) {
-					response(cache.terms[term]);
-					return;
-				}
-				
-				// Trigger a new AJAX request to find the results
-				self.lastXHR = $.getJSON(self.options.autocompleteUrl, request, function(data, status, xhr) {
-					// Cache results
-					$.each(data, function() {
-						cache.keys[this.label.toLowerCase()] = this;
+					
+					// Trigger a new AJAX request to find the results
+					self.lastXHR = $.getJSON(self.options.autocompleteUrl, request, function(data, status, xhr) {
+						var labelField = self.options.labelField;
+						
+						// Message the data
+						assignLabel(data);
+						
+						// Cache results
+						$.each(data, function() {
+							cache.keys[this.label.toLowerCase()] = this;
+						});
+						cache.terms[term] = data;
+						
+						// Respond with data *if* this is the last request
+						if(xhr == self.lastXHR) {
+							response(data);
+						}
 					});
-					cache.terms[term] = data;
-					
-					// Respond with data *if* this is the last request
-					if(xhr == self.lastXHR) {
-						response(data);
-					}
-				});
-			};
+				};
 			
 			// Modify selection
 			var select = this.options.select;
@@ -193,7 +213,16 @@
 					self.options.onSelect(self.selection, true);
 				}
 			});
+			
+			// Utility function to message data before any of it is displayed to the user
+			function assignLabel(data) {
+				$.each(data, function() {
+					this.label = this[self.options.labelField];
+				});
+				return data;
+			}
+			
 		}
     });
 	
-})();
+})(jQuery);

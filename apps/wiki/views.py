@@ -941,16 +941,20 @@ def preview_revision(request):
 @require_GET
 def autosuggest_documents(request):
     """Returns the closest title matches for front-end autosuggests"""
-    partial_title = request.GET.get('term', '')
-
+    term = request.GET.get('term', '')
+    searchBy = request.GET.get('searchBy', '')
+    
     # TODO: isolate to just approved docs?
-    docs = Document.objects.filter(title__icontains=partial_title).filter(is_template=0)
+    if searchBy == "slug":
+        docs = Document.objects.filter(slug__icontains=term).filter(is_template=0);
+    else:
+        docs = Document.objects.filter(title__icontains=term).filter(is_template=0)
 
     docs_list = []
     for d in docs:
         doc_info = {}
         doc_info['title'] = d.title
-        doc_info['label'] = d.title
+        doc_info['slug'] = d.slug
         doc_info['href'] = d.get_absolute_url()
         doc_info['id'] = d.id
         docs_list.append(doc_info)
