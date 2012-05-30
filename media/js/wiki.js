@@ -754,6 +754,7 @@
         jQuery("#id_parent_topic").mozillaAutocomplete({
             autocompleteUrl: $("#autosuggestTitleUrl").attr("data-url"),
             labelField: "href",
+            requireValidOption: true,
             buildRequest: function(req) {
                 req.searchBy = "slug";
                 

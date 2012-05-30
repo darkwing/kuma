@@ -8,20 +8,24 @@
     $.widget("ui.mozillaAutocomplete", $.ui.autocomplete, {
 		
 		/* Additional options */
-		// If we want to require a value be chosen, we should 
 		options: {
+			// Shows an "invalid" style if something good isn't picked
 			requireValidOption: false,
+			// Callback for selection;  true selection or "silent" selection
 			onSelect: function(selectionObj, isSilent){},
+			// Callback for when a selection is deselected via this plugin
 			onDeselect: function(oldSelection){},
+			// URL to hit to retrieve results
 			autocompleteURL: "",
+			// Element to style and add "valid" and "invalid" classes to
 			styleElement: null,
+			// Minimum length of search before XHR is fired
 			minLength: 3,
+			// Method that can modify the request / data object 
 			buildRequest: function(req) {
 				return req;
 			},
-			buildResponse: function(resp) {
-				resp.label = title;
-			},
+			// The data object property which will also be the label
 			labelField: "title"
 		},
 		
@@ -34,6 +38,7 @@
 		// Store the last XHR
 		lastXHR: null,
 		
+		// Updates the styleElement (usually the INPUT)'s CSS styles
 		updateStyles: function(valid) {
 			var validClass = "ui-autocomplete-input-valid",
 				invalidClass = "ui-autocomplete-input-invalid";
@@ -56,7 +61,7 @@
 			}
 		},
 		
-		// Deselecter
+		// Deselection a current selection if exists
 		deselect: function(fireCallback) {
 			var oldSelection = this.selection;
 			
@@ -70,6 +75,7 @@
 			this.options.onDeselect(oldSelection);
 		},
 		
+		// Clears the stored selection and updates styling
 		clear: function() {
 			this.selection = null;
 			
@@ -110,7 +116,7 @@
 			// Decide which element gets styles!
 			this.styleElement = $(this.options.styleElement || this.element);
 			
-			
+			// Set the "source" method -- the one that executes searches or returns the filtered static array
 			var oldSource = this.source;
 			this.source = $.isArray(this.options.source) ?
 				function(request, response) {
@@ -221,7 +227,6 @@
 				});
 				return data;
 			}
-			
 		}
     });
 	
