@@ -180,7 +180,6 @@
 					if(lookup) {
 						self.options.select.call(self, e, { item: self.selection });
 					}
-					
 					return;
 				}
 				

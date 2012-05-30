@@ -57,6 +57,8 @@ OTHER_COLLIDES = _lazy(u'Another document with this metadata already exists.')
 MIDAIR_COLLISION = _lazy(u'This document was modified while you were '
                          'editing it.')
 
+PARENT_URL_DOESNT_EXIST = _lazy(u'A parent with given URL does not exist.')
+
 
 class DocumentForm(forms.ModelForm):
     """Form to create/edit a document."""
