@@ -14,7 +14,8 @@
 			onSelect: function(selectionObj, isSilent){},
 			onDeselect: function(oldSelection){},
 			autocompleteURL: "",
-			styleElement: null
+			styleElement: null,
+			minLength: 3
 		},
 		
 		// Create a cache - make this a 
