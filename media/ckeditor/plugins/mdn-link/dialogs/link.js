@@ -1019,10 +1019,9 @@ CKEDITOR.dialog.add( 'link', function( editor )
 								autoCompleteTextbox = this.getElement().getElementsByTag("input").$[0];
 								
 								jQuery(autoCompleteTextbox).mozillaAutocomplete({
-									minLength: 3,
 									requireValidOption: true,
 									styleElement: autoCompleteTextbox.parentNode,
-									autocompleteUrl: jQuery("#autosuggestTitleUrl").attr("data-url"),
+									autocompleteUrl: autoCompleteUrl,
 									onSelect: function(item, isSilent) {
 										autoCompleteSelection = item;
 										// Select item
