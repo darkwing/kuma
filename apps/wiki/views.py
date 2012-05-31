@@ -635,7 +635,6 @@ def new_document(request):
     if request.method == 'GET':
 
         initial_data = {
-            'slug': initial_slug,
             'parent_topic': initial_parent
         }
 
