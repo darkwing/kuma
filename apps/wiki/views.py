@@ -624,6 +624,8 @@ def list_documents_for_review(request, tag=None):
 def new_document(request):
     """Create a new wiki document."""
     initial_slug = request.GET.get('slug', '')
+    initial_parent = request.GET.get('parent', '')
+    
     if not Document.objects.allows_add_by(request.user, initial_slug):
         # Try to head off disallowed Template:* creation, right off the bat
         raise PermissionDenied
@@ -633,7 +635,8 @@ def new_document(request):
     if request.method == 'GET':
 
         initial_data = {
-            'slug': initial_slug
+            'slug': initial_slug,
+            'parent_topic': initial_parent
         }
 
         if is_template:
@@ -648,6 +651,7 @@ def new_document(request):
             'slug': initial_slug,
             'title': initial_slug,
             'review_tags': review_tags,
+            'parent_topic': initial_parent,
             'show_toc': True
         })
 

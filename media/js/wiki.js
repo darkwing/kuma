@@ -750,17 +750,21 @@
      *  This is the parent field ** ONLY WORKS FOR "NEW" RIGHT NOW **
      */
     function initParentField() { // "parent_topic" is the name
+        var $input = jQuery("#id_parent_topic");
         // Create an autosuggest for the parent
-        jQuery("#id_parent_topic").mozillaAutocomplete({
+        $input.mozillaAutocomplete({
             autocompleteUrl: $("#autosuggestTitleUrl").attr("data-url"),
             labelField: "href",
             requireValidOption: true,
             buildRequest: function(req) {
                 req.searchBy = "slug";
-                
                 return req;
             }
         });
+        // If there's an initial value, search
+        if($input.val()) {
+            $input.mozillaAutocomplete("search");
+        }
     }
      
 

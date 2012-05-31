@@ -139,6 +139,9 @@
 							// Set the selection
 							self.options.select.call(self, null, { item: cache.keys[term] }, true);
 						}
+						else if(!data.length) {
+							self.deselect();
+						}
 					};
 					
 					// Search the cache for the results first;  if found, return it
