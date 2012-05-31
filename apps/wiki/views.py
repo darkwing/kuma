@@ -658,7 +658,11 @@ def new_document(request):
                             {'is_template': is_template,
                              'document_form': doc_form,
                              'revision_form': rev_form})
-
+    
+    # DW TODO:
+    #   1.  Need to re-validate that the parent doc exists
+    #   2.  If so, need the parent_topic's ID so that it can be set for *this* document.
+    
     post_data = request.POST.copy()
     post_data.update({'locale': request.locale})
     doc_form = DocumentForm(post_data)
@@ -948,8 +952,9 @@ def autosuggest_documents(request):
     searchBy = request.GET.get('searchBy', '')
     
     if searchBy == 'slug':
+        # DW TODO:
         # This must be improved;  at this point, a full path like "/en-US/docs/en-US/David_Walsh"
-        # doesn't provide a valid match :/
+        # doesn't provide a valid match, even though the page exists :/
         docs = Document.objects.filter(slug__icontains=term).filter(is_template=0);
     else:
         docs = Document.objects.filter(title__icontains=term).filter(is_template=0)
