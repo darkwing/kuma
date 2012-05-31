@@ -62,7 +62,7 @@
 		},
 		
 		// Deselection a current selection if exists
-		deselect: function(fireCallback) {
+		deselect: function() {
 			var oldSelection = this.selection;
 			
 			this.clear();
@@ -139,7 +139,8 @@
 							// Set the selection
 							self.options.select.call(self, null, { item: cache.keys[term] }, true);
 						}
-						else if(!data.length) {
+						else {
+							// If no data, we know it's not good
 							self.deselect();
 						}
 					};
@@ -217,11 +218,15 @@
 				if(lookup) {
 					// Add the valid class
 					self.updateStyles(true);
-					
 					// Set the selection
 					self.options.onSelect(self.selection, true);
 				}
 			});
+			
+			// If there's an initial value and we must match, we need search initially
+			if(self.options.requireValidOption && self.element.val()) {
+				self.search(self.element.val());
+			}
 			
 			// Utility function to message data before any of it is displayed to the user
 			function assignLabel(data) {

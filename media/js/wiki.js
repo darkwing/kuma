@@ -761,10 +761,12 @@
                 return req;
             }
         });
+        /*
         // If there's an initial value, search
         if($input.val()) {
             $input.mozillaAutocomplete("search");
         }
+        */
     }
      
 

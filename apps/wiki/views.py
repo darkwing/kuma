@@ -948,8 +948,9 @@ def autosuggest_documents(request):
     term = request.GET.get('term', '')
     searchBy = request.GET.get('searchBy', '')
     
-    # TODO: isolate to just approved docs?
-    if searchBy == "slug":
+    if searchBy == 'slug':
+        # This must be improved;  at this point, a full path like "/en-US/docs/en-US/David_Walsh"
+        # doesn't provide a valid match :/
         docs = Document.objects.filter(slug__icontains=term).filter(is_template=0);
     else:
         docs = Document.objects.filter(title__icontains=term).filter(is_template=0)
