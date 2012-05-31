@@ -660,7 +660,7 @@ def new_document(request):
                              'revision_form': rev_form})
     
     # DW TODO:
-    #   1.  Need to re-validate that the parent doc exists
+    #   1.  Need to re-validate that the parent doc exists (models.py)
     #   2.  If so, need the parent_topic's ID so that it can be set for *this* document.
     
     post_data = request.POST.copy()
@@ -950,11 +950,12 @@ def autosuggest_documents(request):
     """Returns the closest title matches for front-end autosuggests"""
     term = request.GET.get('term', '')
     searchBy = request.GET.get('searchBy', '')
+    locale = request.locale
     
     if searchBy == 'slug':
         # DW TODO:
-        # This must be improved;  at this point, a full path like "/en-US/docs/en-US/David_Walsh"
-        # doesn't provide a valid match, even though the page exists :/
+        # This can probably be improved, maybe not hardcoded...
+        term = term.replace('/' + request.locale + '/docs/' + request.locale + '/', '')
         docs = Document.objects.filter(slug__icontains=term).filter(is_template=0);
     else:
         docs = Document.objects.filter(title__icontains=term).filter(is_template=0)
