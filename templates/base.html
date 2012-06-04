@@ -33,6 +33,9 @@
   <meta http-equiv="X-UA-Compatible" content="IE=Edge">
   <script src="{{ MEDIA_URL }}js/html5.js"></script>
   <![endif]-->
+  
+  <!-- open search -->
+  <link rel="search" type="application/opensearchdescription+xml" href="{{ settings.SITE_URL }}/{{ request.locale }}/search/xml" title="{{ _('Mozilla Developer Network') }}" />
 
   {% block extrahead %}{% endblock %}
 </head>
