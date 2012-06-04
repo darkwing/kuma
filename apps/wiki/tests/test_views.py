@@ -1010,6 +1010,31 @@ class DocumentEditingTests(TestCaseBase):
         eq_(302, resp.status_code)
         ok_(d.children.count() == 1)
         ok_(d.children.all()[0].title == 'Replicated local storage')
+        
+    def test_comment_split_upon_edit(self):
+        """Only the child slug should display within edit form, not the full path"""
+        client = LocalizingClient()
+        client.login(username='admin', password='testpass')
+
+        # Post a new document.
+        data = new_document_data()
+        child_slug = 'a-test-article/a-test-child-article'
+        data['slug'] = child_slug
+        resp = client.post(reverse('wiki.new_document'), data)
+        doc = Document.objects.get(slug=data['slug'])
+
+        # Modify slug before pushing to page
+        doc.slug = child_slug
+
+        resp = client.get(reverse('wiki.edit_document', args=[doc.full_path]))
+        page = pq(resp.content)
+        slug = page.find('input[name="slug"]').attr('value')
+
+        valid_slug = child_slug.split('/')[-1]
+
+        # Ensure the slug displayed on screen is the partial child slug
+        # *not* the full slug
+        eq_(slug, valid_slug)
 
 
 class SectionEditingResourceTests(TestCaseBase):
