@@ -653,6 +653,7 @@ MINIFY_BUNDLES = {
         'wiki': (
             'js/libs/django/prepopulate.js',
             'syntaxhighlighter/scripts/shCore.js',
+            'syntaxhighlighter/scripts/shLegacy.js',
             'syntaxhighlighter/scripts/shBrushBash.js',
             'syntaxhighlighter/scripts/shBrushCpp.js',
             'syntaxhighlighter/scripts/shBrushCss.js',
