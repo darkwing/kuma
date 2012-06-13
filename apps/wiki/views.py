@@ -192,13 +192,12 @@ def document(request, document_slug, document_locale):
             # No current_revision, no parent with current revision, so
             # nothing to show.
             fallback_reason = 'no_content'
-    except Document.DoesNotExist:
 
-        def check_for_translation():
+    except Document.DoesNotExist:
+        try:
             # Look in default language:
-            doc = get_object_or_404(Document,
-                                locale=settings.WIKI_DEFAULT_LANGUAGE,
-                                slug=document_slug)
+            doc = Document.objects.get(locale=settings.WIKI_DEFAULT_LANGUAGE,
+                                       slug=document_slug)
 
             # If there's a translation to the requested locale, take it:
             translation = doc.translated_to(document_locale)
@@ -215,14 +214,16 @@ def document(request, document_slug, document_locale):
                 # and OK to fall back to parent (parent is approved).
                 fallback_reason = 'no_translation'
 
-        # Only check for child-404-redirect is certain params not presented
-        if (request.GET.get('raw', False) is False or
-            request.GET.get('include', False) is False or
-            request.GET.get('nocreate', False) is False):
+        except Document.DoesNotExist:
 
-            # The user may be trying to create a child page
-            # If a parent exists for this document,
-            # redirect them to the "Create" page
+            # If any of these parameters are present, throw a real 404.
+            if (request.GET.get('raw', False) is not False or
+                request.GET.get('include', False) is not False or
+                request.GET.get('nocreate', False) is not False):
+                raise Http404
+
+            # The user may be trying to create a child page If a parent exists
+            # for this document, redirect them to the "Create" page
             try:
                 parent_slug = document_slug.split('/')
                 new_child_slug = parent_slug.pop()
@@ -238,10 +239,7 @@ def document(request, document_slug, document_locale):
                 return HttpResponseRedirect(url)
 
             except Document.DoesNotExist:
-                check_for_translation()
-
-        else:
-            check_for_translation()
+                raise Http404
 
     # Obey explicit redirect pages:
     # Don't redirect on redirect=no (like Wikipedia), so we can link from a
