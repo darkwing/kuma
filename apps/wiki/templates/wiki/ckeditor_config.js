@@ -31,7 +31,7 @@ CKEDITOR.on('instanceReady', function (ev) {
 
 CKEDITOR.editorConfig = function(config) {
 
-    config.extraPlugins = 'autogrow,definitionlist,mdn-buttons,mdn-link,mdn-syntaxhighlighter';
+    config.extraPlugins = 'autogrow,definitionlist,mdn-buttons,mdn-link,mdn-syntaxhighlighter,tablesort';
     config.removePlugins = 'link';
     
     config.toolbar_MDN = [
