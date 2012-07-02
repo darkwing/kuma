@@ -1272,11 +1272,18 @@ def translate(request, document_slug, document_locale, revision_id=None):
         which_form = request.POST.get('form', 'both')
         doc_form_invalid = False
 
+        # append final slug
+        post_data = request.POST.copy()
+        parent_slug_split.append(post_data['slug'])
+        destination_slug = '/'.join(parent_slug_split)
+
+        logging.debug('destination_slug = ' + destination_slug)
+
         if user_has_doc_perm and which_form in ['doc', 'both']:
-            disclose_description = True
-            post_data = request.POST.copy()
+            disclose_description = True            
 
             post_data.update({'locale': document_locale})
+
             doc_form = DocumentForm(post_data, instance=doc)
             doc_form.instance.locale = document_locale
             doc_form.instance.parent = parent_doc
@@ -1287,6 +1294,7 @@ def translate(request, document_slug, document_locale, revision_id=None):
             # the Revision is valid before saving the Document.
             if doc_form.is_valid() and (which_form == 'doc' or
                                         rev_form.is_valid()):
+                post_data.update({'slug': destination_slug})
                 doc = doc_form.save(parent_doc)
 
                 # Possibly schedule a rebuild.
@@ -1307,11 +1315,9 @@ def translate(request, document_slug, document_locale, revision_id=None):
 
         if doc and user_has_rev_perm and which_form in ['rev', 'both']:
 
-            post_data = request.POST.copy()
-
             # append final slug
-            parent_slug_split.append(post_data['slug'])
-            post_data['slug'] = '/'.join(parent_slug_split)
+            post_data = request.POST.copy()
+            post_data.update({'slug': destination_slug})
 
             rev_form = RevisionForm(post_data)
             rev_form.instance.document = doc  # for rev_form.clean()
