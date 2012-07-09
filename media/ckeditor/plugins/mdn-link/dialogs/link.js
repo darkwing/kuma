@@ -482,6 +482,10 @@ CKEDITOR.dialog.add( 'link', function( editor )
 												// Select item
 												autoCompleteSelect(dialog, !isSilent);
 											},
+											buildRequest: function(req) {
+												req.current_locale = 1;
+												return req;
+											},
 											open: function() {
 												jQuery(window).bind("scroll", openCancelScroll);
 											},
