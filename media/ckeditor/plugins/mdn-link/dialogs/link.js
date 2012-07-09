@@ -482,7 +482,7 @@ CKEDITOR.dialog.add( 'link', function( editor )
 												// Select item
 												autoCompleteSelect(dialog, !isSilent);
 											},
-											buildRequest: function(req) {
+											buildRequestData: function(req) {
 												req.current_locale = 1;
 												return req;
 											},

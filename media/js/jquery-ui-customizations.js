@@ -22,7 +22,7 @@
 			// Minimum length of search before XHR is fired
 			minLength: 3,
 			// Method that can modify the request / data object 
-			buildRequest: function(req) {
+			buildRequestData: function(req) {
 				return req;
 			},
 			// The data object property which will also be the label
@@ -130,7 +130,7 @@
 				} :
 				function(request, response) {
 					// Format the request
-					request = this.options.buildRequest(request);
+					request = this.options.buildRequestData(request);
 					
 					// Put the term in lowercase for caching purposes
 					var term = request.term.toLowerCase();

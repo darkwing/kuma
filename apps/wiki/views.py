@@ -598,8 +598,7 @@ def edit_document(request, document_slug, document_locale, revision_id=None):
         doc_form = DocumentForm(initial=_document_form_initial(doc))
         
     # Need to make check *here* to see if this could have a translation parent
-    #show_translation_parent_block = (document_locale != settings.WIKI_DEFAULT_LANGUAGE) and (not doc.parent_id)
-    show_translation_parent_block = True
+    show_translation_parent_block = (document_locale != settings.WIKI_DEFAULT_LANGUAGE) and (not doc.parent_id)
 
     if request.method == 'GET':
         if not (rev_form or doc_form):
@@ -858,6 +857,7 @@ def autosuggest_documents(request):
     """Returns the closest title matches for front-end autosuggests"""
     partial_title = request.GET.get('term', '')
     current_locale = request.GET.get('current_locale', False)
+    exclude_current_locale = request.GET.get('exclude_current_locale', False)
 
     # TODO: isolate to just approved docs?
     docs = (Document.objects.filter(title__icontains=partial_title,
@@ -867,8 +867,11 @@ def autosuggest_documents(request):
                              exclude(slug__icontains='Talk:').  # Remove old talk pages
                              order_by('title'))
 
-    if(current_locale):
-        docs.filter(locale=request.locale)
+    if current_locale:
+        docs = docs.filter(locale=request.locale)
+
+    if exclude_current_locale:
+        docs = docs.exclude(locale=request.locale)
 
     docs_list = []
     for d in docs:
