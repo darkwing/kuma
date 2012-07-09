@@ -263,7 +263,7 @@ SERVE_MEDIA = False
 ADMIN_MEDIA_PREFIX = '/admin-media/'
 
 # Paths that don't require a locale prefix.
-SUPPORTED_NONLOCALES = ('media', 'admin', 'robots.txt', 'services', '1')
+SUPPORTED_NONLOCALES = ('media', 'admin', 'robots.txt', 'services', '1', 'files')
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = '#%tc(zja8j01!r#h_y)=hy!^k)9az74k+-ib&ij&+**s3-e^_z'
@@ -962,6 +962,18 @@ CONSTANCE_CONFIG = dict(
         'the 4th retry waits 4*.5 = 2 seconds.'
     ),
 
+    KUMA_DOCUMENT_RENDER_TIMEOUT = (
+        180.0,
+        'Maximum seconds to wait before considering a rendering in progress or '
+        'scheduled as failed and allowing another attempt.'
+    ),
+    KUMA_DOCUMENT_FORCE_DEFERRED_TIMEOUT = (
+        10.0,
+        'Maximum seconds to allow a document to spend rendering during the '
+        'response cycle before flagging it to be sent to the deferred rendering '
+        'queue for future renders.'
+    ),
+
     KUMASCRIPT_TIMEOUT = (
         0.0,
         'Maximum seconds to wait for a response from the kumascript service. '
@@ -974,6 +986,24 @@ CONSTANCE_CONFIG = dict(
         'Maximum acceptable age (in seconds) of a cached response from '
         'kumascript. Passed along in a Cache-Control: max-age={value} header, '
         'which tells kumascript whether or not to serve up a cached response.'
+    ),
+
+    KUMA_CUSTOM_CSS_PATH = (
+        '/en-US/docs/Template:CustomCSS',
+        'Path to a wiki document whose raw content will be loaded as a CSS '
+        'stylesheet for the wiki base template. Will also cause the ?raw '
+        'parameter for this path to send a Content-Type: text/css header. Empty '
+        'value disables the feature altogether.',
+    ),
+
+    DIFF_CONTEXT_LINES = (
+        0,
+        'Number of lines of context to show in diff display.',
+    ),
+
+    FEED_DIFF_CONTEXT_LINES = (
+        3,
+        'Number of lines of context to show in feed diff display.',
     ),
 )
 

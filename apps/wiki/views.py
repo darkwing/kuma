@@ -18,6 +18,7 @@ except ImportError:
     from django.utils.functional import wraps
 
 from django.conf import settings
+from django.db import transaction
 from django.core.exceptions import PermissionDenied
 from django.template import RequestContext
 from django.core.cache import cache
@@ -45,14 +46,16 @@ from access.decorators import permission_required, login_required
 from sumo.helpers import urlparams
 from sumo.urlresolvers import Prefixer, reverse
 from sumo.utils import paginate, smart_int
-from wiki import (DOCUMENTS_PER_PAGE, TEMPLATE_TITLE_PREFIX,
-                  KUMASCRIPT_TIMEOUT_ERROR, ReadOnlyException)
+from wiki import (DOCUMENTS_PER_PAGE, TEMPLATE_TITLE_PREFIX, ReadOnlyException)
 from wiki.decorators import check_readonly
 from wiki.events import (EditDocumentEvent, ReviewableRevisionInLocaleEvent,
                          ApproveRevisionInLocaleEvent)
-from wiki.forms import DocumentForm, RevisionForm, ReviewForm
+from wiki.forms import (DocumentForm, RevisionForm, ReviewForm, RevisionValidationForm,
+                        AttachmentRevisionForm)
 from wiki.models import (Document, Revision, HelpfulVote, EditorToolbar,
-                         DocumentTag, ReviewTag,
+                         DocumentTag, ReviewTag, Attachment,
+                         DocumentRenderingInProgress,
+                         DocumentRenderedContentNotAvailable,
                          CATEGORIES,
                          OPERATING_SYSTEMS, GROUPED_OPERATING_SYSTEMS,
                          FIREFOX_VERSIONS, GROUPED_FIREFOX_VERSIONS,
@@ -62,6 +65,7 @@ from wiki.models import (Document, Revision, HelpfulVote, EditorToolbar,
                          get_current_or_latest_revision)
 from wiki.tasks import send_reviewed_notification, schedule_rebuild_kb
 import wiki.content
+from wiki import kumascript
 
 import logging
 
@@ -186,9 +190,11 @@ def _document_last_modified(request, document_slug, document_locale):
 @require_http_methods(['GET', 'HEAD'])
 @process_document_path
 @condition(last_modified_func=_document_last_modified)
+@transaction.autocommit # For rendering bookkeeping, needs immediate updates
 def document(request, document_slug, document_locale):
     """View a wiki document."""
     fallback_reason = None
+
     # If a slug isn't available in the requested locale, fall back to en-US:
     try:
         doc = Document.objects.get(locale=document_locale, slug=document_slug)
@@ -231,24 +237,31 @@ def document(request, document_slug, document_locale):
                 request.GET.get('nocreate', False) is not False):
                 raise Http404
 
-            # The user may be trying to create a child page If a parent exists
+            # The user may be trying to create a child page; if a parent exists
             # for this document, redirect them to the "Create" page
-            try:
-                parent_slug = document_slug.split('/')
-                new_child_slug = parent_slug.pop()
-                parent_slug = '/'.join(parent_slug)
+            # Otherwise, they could be trying to create a main level doc
 
-                parent_doc = Document.objects.get(locale=document_locale,
-                                                  slug=parent_slug,
-                                                  is_template=0)
+            parent_split = document_slug.split('/')
+            url = reverse('wiki.new_document', locale=document_locale)
 
-                # Redirect to create page with parent ID
-                url = reverse('wiki.new_document', locale=document_locale)
-                url = urlparams(url, parent=parent_doc.id, slug=new_child_slug)
-                return HttpResponseRedirect(url)
+            if len(parent_split) > 1:
+                try:
+                    new_child_slug = parent_split.pop()
+                    parent_slug = '/'.join(parent_split)
 
-            except Document.DoesNotExist:
-                raise Http404
+                    parent_doc = Document.objects.get(locale=document_locale,
+                                                      slug=parent_slug,
+                                                      is_template=0)
+                    # Redirect to create page with parent ID
+                    url = urlparams(url, parent=parent_doc.id,
+                                    slug=new_child_slug)
+                    return HttpResponseRedirect(url)
+                except Document.DoesNotExist:
+                    raise Http404
+
+            # This is a "base level" redirect, i.e. no parent
+            url = urlparams(url, slug=document_slug)
+            return HttpResponseRedirect(url)
 
     # Obey explicit redirect pages:
     # Don't redirect on redirect=no (like Wikipedia), so we can link from a
@@ -256,6 +269,7 @@ def document(request, document_slug, document_locale):
     # the redirect.
     redirect_url = (None if request.GET.get('redirect') == 'no'
                     else doc.redirect_url())
+
     if redirect_url:
         url = urlparams(redirect_url, query_dict=request.GET,
                         redirectslug=doc.slug, redirectlocale=doc.locale)
@@ -283,35 +297,37 @@ def document(request, document_slug, document_locale):
             r[k] = v
         return r
 
-    related = doc.related_documents.order_by('-related_to__in_common')[0:5]
-
-    # Get the contributors. (To avoid this query, we could render the
-    # the contributors right into the Document's html field.)
-    # NOTE: .only() avoids a memcache object-too-large error for large wiki
-    # pages when an attempt is made to cache all revisions
-    contributors = set([r.creator for r in doc.revisions
-                                            .filter(is_approved=True)
-                                            .only('creator')
-                                            .select_related('creator')])
-    # TODO: Port this kitsune feature over, eventually:
-    #     https://github.com/jsocol/kitsune/commit/
-    #       f1ebb241e4b1d746f97686e65f49e478e28d89f2
-
     # Grab some parameters that affect output
     section_id = request.GET.get('section', None)
     show_raw = request.GET.get('raw', False) is not False
     is_include = request.GET.get('include', False) is not False
     need_edit_links = request.GET.get('edit_links', False) is not False
 
+    render_raw_fallback = False
+
     # Grab the document HTML as a fallback, then attempt to use kumascript:
     doc_html, ks_errors = doc.html, None
-    if _run_kumascript(doc, request):
-        resp_body, resp_errors = _perform_kumascript_request(
-                request, response_headers, doc, document_locale, document_slug)
-        if resp_body:
-            doc_html = resp_body
-        if resp_errors:
-            ks_errors = resp_errors
+    if kumascript.should_use_rendered(doc, request.GET):
+
+        # A logged-in user can schedule a full re-render with Shift-Reload
+        cache_control = None
+        if request.user.is_authenticated():
+            # Shift-Reload sends Cache-Control: no-cache
+            ua_cc = request.META.get('HTTP_CACHE_CONTROL')
+            if ua_cc == 'no-cache':
+                cache_control = 'no-cache'
+
+        try:
+            base_url = request.build_absolute_uri('/')
+            r_body, r_errors = doc.get_rendered(cache_control, base_url)
+            if r_body:
+                doc_html = r_body
+            if r_errors:
+                ks_errors = r_errors
+        except DocumentRenderedContentNotAvailable:
+            # There was no rendered content available, and we were unable to
+            # render it on the spot. So, fall back to presenting raw content
+            render_raw_fallback = True
 
     toc_html = None
     if not doc.is_template:
@@ -348,271 +364,38 @@ def document(request, document_slug, document_locale):
     if show_raw:
         response = HttpResponse(doc_html)
         response['x-frame-options'] = 'Allow'
-        if doc.is_template:
+        if constance.config.KUMA_CUSTOM_CSS_PATH == doc.get_absolute_url():
+            response['Content-Type'] = 'text/css; charset=utf-8'
+        elif doc.is_template:
             # Treat raw, un-bleached template source as plain text, not HTML.
             response['Content-Type'] = 'text/plain; charset=utf-8'
         return set_common_headers(response)
+
+    related = doc.related_documents.order_by('-related_to__in_common')[0:5]
+
+    # Get the contributors. (To avoid this query, we could render the
+    # the contributors right into the Document's html field.)
+    # NOTE: .only() avoids a memcache object-too-large error for large wiki
+    # pages when an attempt is made to cache all revisions
+    contributors = set([r.creator for r in doc.revisions
+                                            .filter(is_approved=True)
+                                            .only('creator')
+                                            .select_related('creator')])
+    # TODO: Port this kitsune feature over, eventually:
+    #     https://github.com/jsocol/kitsune/commit/
+    #       f1ebb241e4b1d746f97686e65f49e478e28d89f2
 
     data = {'document': doc, 'document_html': doc_html, 'toc_html': toc_html,
             'redirected_from': redirected_from,
             'related': related, 'contributors': contributors,
             'fallback_reason': fallback_reason,
-            'kumascript_errors': ks_errors}
+            'kumascript_errors': ks_errors,
+            'render_raw_fallback': render_raw_fallback}
     data.update(SHOWFOR_DATA)
 
     response = jingo.render(request, 'wiki/document.html', data)
     # FIXME: For some reason, the ETag isn't coming through here.
     return set_common_headers(response)
-
-
-def _build_kumascript_cache_keys(document_locale, document_slug):
-    """Build the cache keys used for Kumascript"""
-    path_hash = hashlib.md5((u'%s/%s' % (document_locale, document_slug))
-                            .encode('utf8'))
-    cache_key = 'kumascript:%s:%s' % (path_hash.hexdigest(), '%s')
-    ck_etag = cache_key % 'etag'
-    ck_modified = cache_key % 'modified'
-    ck_body = cache_key % 'body'
-    ck_errors = cache_key % 'errors'
-    return (ck_etag, ck_modified, ck_body, ck_errors)
-
-
-def _invalidate_kumascript_cache(document):
-    """Invalidate the cached kumascript response for a given document"""
-    if constance.config.KUMASCRIPT_TIMEOUT == 0:
-        # Do nothing if kumascript is disabled
-        return
-    cache.delete_many(_build_kumascript_cache_keys(document.slug,
-                                                   document.locale))
-
-
-def _run_kumascript(doc, request):
-    """
-    We'll make a request to kumascript for macro evaluation only if:
-      * The service isn't disabled with a timeout of 0
-      * The request has *not* asked for raw source
-        (eg. ?raw)
-      * The request has *not* asked for no macro evaluation
-        (eg. ?nomacros)
-      * The request *has* asked for macro evaluation
-        (eg. ?raw&macros)
-    """
-    show_raw = request.GET.get('raw', False) is not False
-    no_macros = request.GET.get('nomacros', False) is not False
-    force_macros = request.GET.get('macros', False) is not False
-    is_template = False
-    if doc:
-        is_template = doc.is_template
-    return (constance.config.KUMASCRIPT_TIMEOUT > 0 and
-            not is_template and
-            (force_macros or (not no_macros and not show_raw)))
-
-
-def _process_kumascript_body(response):
-    # HACK: Assume we're getting UTF-8, which we should be.
-    # TODO: Better solution would be to upgrade the requests module
-    # in vendor from 0.6.1 to at least 0.10.6, and use resp.text,
-    # which does auto-detection. But, that will break things.
-    resp_body = response.read().decode('utf8')
-
-    # We defer bleach sanitation of kumascript content all the way
-    # through editing, source display, and raw output. But, we still
-    # want sanitation, so it finally gets picked up here.
-    resp_body = bleach.clean(
-        resp_body, attributes=ALLOWED_ATTRIBUTES, tags=ALLOWED_TAGS,
-        styles=ALLOWED_STYLES, strip_comments=False
-    )
-    return resp_body
-
-
-def _process_kumascript_errors(response):
-    """Attempt to decode any FireLogger-style error messages in the response
-    from kumascript."""
-    resp_errors = []
-    try:
-        # Extract all the log packets from headers.
-        fl_packets = defaultdict(dict)
-        for k, v in response.headers.items():
-            if not k.lower().startswith('firelogger-'):
-                continue
-            _, packet_id, seq = k.split('-', 3)
-            fl_packets[packet_id][seq] = v
-
-        # The FireLogger spec allows for multiple "packets". But,
-        # kumascript only ever sends the one, so flatten all messages.
-        fl_msgs = []
-        for id, contents in fl_packets.items():
-            seqs = sorted(contents.keys(), key=int)
-            d_b64 = "\n".join(contents[x] for x in seqs)
-            d_json = base64.decodestring(d_b64)
-            packet = json.loads(d_json)
-            fl_msgs.extend(packet['logs'])
-
-        if len(fl_msgs):
-            resp_errors = fl_msgs
-
-    except Exception, e:
-        resp_errors = [
-            {"level": "error",
-              "message": "Problem parsing errors: %s" % e,
-              "args": ["ParsingError"]}
-        ]
-    return resp_errors
-
-
-def _add_kumascript_env_headers(headers, env_vars):
-    # Encode the vars as kumascript headers, as base64 JSON-encoded values.
-    headers.update(dict(
-        ('x-kumascript-env-%s' % k, base64.b64encode(json.dumps(v)))
-        for k, v in env_vars.items()
-    ))
-    return headers
-
-
-def _perform_kumascript_post(request, content):
-    ks_url = settings.KUMASCRIPT_URL_TEMPLATE.format(path='')
-    headers = {
-        'X-FireLogger': '1.2',
-    }
-    env_vars = dict(
-        url=request.build_absolute_uri('/'),
-    )
-    _add_kumascript_env_headers(headers, env_vars)
-    resp = requests.post(ks_url, timeout=constance.config.KUMASCRIPT_TIMEOUT,
-                        data=content, headers=headers)
-    if resp:
-        resp_body = _process_kumascript_body(resp)
-        resp_errors = _process_kumascript_errors(resp)
-        return resp_body, resp_errors
-    else:
-        resp_errors = KUMASCRIPT_TIMEOUT_ERROR
-        return content, resp_errors
-
-
-def _perform_kumascript_request(request, response_headers, document,
-                                document_locale, document_slug):
-    """Perform a kumascript GET request for a document locale and slug.
-
-    This is broken out into its own utility function, both to make the view
-    method simpler and to make it easy to mock out in testing.
-    """
-    resp_body, resp_errors = None, None
-
-    try:
-        url_tmpl = settings.KUMASCRIPT_URL_TEMPLATE
-        url = unicode(url_tmpl).format(path=u'%s/%s' %
-                                       (document_locale, document_slug))
-
-        ck_etag, ck_modified, ck_body, ck_errors = (
-                _build_kumascript_cache_keys(document_slug, document_locale))
-
-        # Default to the configured max-age for cache control.
-        max_age = constance.config.KUMASCRIPT_MAX_AGE
-        cache_control = 'max-age=%s' % max_age
-
-        # TODO: Wrap this in a waffle flag for primitive access control?
-        if request.user.is_authenticated():
-            # Restricting to auth'd users places a speed bump on end-user
-            # triggered cache invalidation.
-            ua_cc = request.META.get('HTTP_CACHE_CONTROL')
-
-            if ua_cc == 'no-cache':
-                # Firefox issues no-cache on shift-reload, so this lets
-                # end-users trigger cache invalidation. kumascript will react
-                # to no-cache by reloading both document and template sources
-                # from Kuma.
-                cache_control = 'no-cache'
-
-            elif ua_cc == 'max-age=0':
-                # Firefox sends Cache-Control: max-age=0 on reload. kumascript
-                # will react to max-age=0 by reloading just the document source
-                # from Kuma and use cached templates. (pending bug 730715)
-                cache_control = 'max-age=0'
-
-        headers = {
-            'X-FireLogger': '1.2',
-            'Cache-Control': cache_control
-        }
-
-        # Assemble some KumaScript env vars
-        # TODO: See dekiscript vars for future inspiration
-        # http://developer.mindtouch.com/en/docs/DekiScript/Reference/
-        #   Wiki_Functions_and_Variables
-        path = document.get_absolute_url()
-        env_vars = dict(
-            path=path,
-            url=request.build_absolute_uri(path),
-            id=document.pk,
-            locale=document.locale,
-            title=document.title,
-            slug=document.slug,
-            tags=[x.name for x in document.tags.all()],
-            modified=time.mktime(document.modified.timetuple()),
-            cache_control=cache_control,
-        )
-        _add_kumascript_env_headers(headers, env_vars)
-
-        # Set up for conditional GET, if we have the details cached.
-        c_meta = cache.get_many([ck_etag, ck_modified])
-        if ck_etag in c_meta:
-            headers['If-None-Match'] = c_meta[ck_etag]
-        if ck_modified in c_meta:
-            headers['If-Modified-Since'] = c_meta[ck_modified]
-
-        # Finally, fire off the request.
-        resp = requests.get(url, headers=headers,
-            timeout=constance.config.KUMASCRIPT_TIMEOUT)
-
-        if resp.status_code == 304:
-            # Conditional GET was a pass, so use the cached content.
-            c_result = cache.get_many([ck_body, ck_errors])
-            resp_body = c_result.get(ck_body, '').decode('utf-8')
-            resp_errors = c_result.get(ck_errors, None)
-
-            # Set a header so we can see what happened in caching.
-            response_headers['X-Kumascript-Caching'] = (
-                    '304 Not Modified, Age: %s' % resp.headers.get('age', 0))
-
-        elif resp.status_code == 200:
-            resp_body = _process_kumascript_body(resp)
-            resp_errors = _process_kumascript_errors(resp)
-
-            # Set a header so we can see what happened in caching.
-            response_headers['X-Kumascript-Caching'] = (
-                    '200 OK, Age: %s' % resp.headers.get('age', 0))
-
-            # Cache the request for conditional GET, but use the max_age for
-            # the cache timeout here too.
-            cache.set(ck_etag, resp.headers.get('etag'),
-                      timeout=max_age)
-            cache.set(ck_modified, resp.headers.get('last-modified'),
-                      timeout=max_age)
-            cache.set(ck_body, resp_body.encode('utf-8'),
-                      timeout=max_age)
-            if resp_errors:
-                cache.set(ck_errors, resp_errors, timeout=max_age)
-
-        elif resp.status_code == None:
-            resp_errors = KUMASCRIPT_TIMEOUT_ERROR
-
-        else:
-            resp_errors = [
-                {"level": "error",
-                  "message": "Unexpected response from Kumascript service: %s"
-                             % resp.status_code,
-                  "args": ["UnknownError"]}
-            ]
-
-    except Exception, e:
-        # Last resort: Something went really haywire. Kumascript server died
-        # mid-request, or something. Try to report at least some hint.
-        resp_errors = [
-            {"level": "error",
-             "message": "Kumascript service failed unexpectedly: %s" % type(e),
-             "args": ["UnknownError"]}
-        ]
-
-    return (resp_body, resp_errors)
 
 
 @waffle_flag('kumawiki')
@@ -670,6 +453,7 @@ def list_documents_for_review(request, tag=None):
 @waffle_flag('kumawiki')
 @login_required
 @check_readonly
+@transaction.autocommit # For rendering bookkeeping, needs immediate updates
 def new_document(request):
     """Create a new wiki document."""
     initial_parent_id = request.GET.get('parent', '')
@@ -690,7 +474,7 @@ def new_document(request):
             parent_slug = parent_doc.slug
             parent_path = request.build_absolute_uri(parent_doc.get_absolute_url())
         except Document.DoesNotExist:
-            parent_slug = ''
+            logging.debug('Cannot find parent')
 
     if request.method == 'GET':
 
@@ -727,15 +511,23 @@ def new_document(request):
 
     post_data = request.POST.copy()
     post_data.update({'locale': request.locale})
-
-    # Prefix this new doc's slug with the parent document's slug.
     if parent_slug:
-        post_data.update({'slug': parent_slug + '/' + post_data['slug']})
+        post_data.update({'parent_topic': initial_parent_id})
 
     doc_form = DocumentForm(post_data)
-    rev_form = RevisionForm(post_data)
+    rev_form = RevisionValidationForm(request.POST.copy())
 
     if doc_form.is_valid() and rev_form.is_valid():
+        
+        # Now that the form has been validated
+        # Add the parent slug path
+        if parent_slug:
+            post_data.update({'slug': parent_slug + '/' + post_data['slug']})
+        doc_form = DocumentForm(post_data)
+        doc_form.is_valid()
+
+        rev_form = RevisionForm(post_data)
+        
         slug = doc_form.cleaned_data['slug']
         if not Document.objects.allows_add_by(request.user, slug):
             raise PermissionDenied
@@ -752,7 +544,9 @@ def new_document(request):
     return jingo.render(request, 'wiki/new_document.html',
                         {'is_template': is_template,
                          'document_form': doc_form,
-                         'revision_form': rev_form})
+                         'revision_form': rev_form,
+                         'parent_slug': parent_slug,
+                         'parent_path': parent_path})
 
 
 @waffle_flag('kumawiki')
@@ -761,6 +555,7 @@ def new_document(request):
                  # Document.allows_editing_by.
 @process_document_path
 @check_readonly
+@transaction.autocommit # For rendering bookkeeping, needs immediate updates
 def edit_document(request, document_slug, document_locale, revision_id=None):
     """Create a new revision of a wiki document, or edit document metadata."""
     doc = get_object_or_404(
@@ -779,7 +574,7 @@ def edit_document(request, document_slug, document_locale, revision_id=None):
                                                              '-id')[0]
 
     # Keep hold of the full post slug
-    full_slug = rev.slug
+    full_slug = document_slug
     slug_split = full_slug.split('/')
     # Update the slug, removing the parent path, and
     # *only* using the last piece.
@@ -825,20 +620,17 @@ def edit_document(request, document_slug, document_locale, revision_id=None):
             if doc.allows_editing_by(user):
                 post_data = request.POST.copy()
 
-                if 'slug' in post_data:  # if a section edit
-                    slug_split.append(post_data['slug'])
-                    post_data['slug'] = '/'.join(slug_split)
-
                 post_data.update({'locale': document_locale})
                 doc_form = DocumentForm(post_data, instance=doc)
                 if doc_form.is_valid():
-                    
+
+                    if 'slug' in post_data:  # if must be here for section edits
+                        slug_split.append(post_data['slug'])
+                        post_data['slug'] = '/'.join(slug_split)
+
                     # Get the possibly new slug for the imminent redirection:
                     doc = doc_form.save(None)
-                    _invalidate_kumascript_cache(doc)
-
-                    # Do we need to rebuild the KB?
-                    _maybe_schedule_rebuild(doc_form)
+                    doc.schedule_rendering('max-age=0')
 
                     if is_iframe_target:
                         # TODO: Does this really need to be a template? Just
@@ -865,11 +657,8 @@ def edit_document(request, document_slug, document_locale, revision_id=None):
             else:
 
                 post_data = request.POST.copy()
-                if 'slug' in post_data:
-                    slug_split.append(post_data['slug'])
-                    post_data['slug'] = '/'.join(slug_split)
 
-                rev_form = RevisionForm(post_data,
+                rev_form = RevisionValidationForm(post_data,
                                         is_iframe_target=is_iframe_target,
                                         section_id=section_id)
                 rev_form.instance.document = doc  # for rev_form.clean()
@@ -886,7 +675,7 @@ def edit_document(request, document_slug, document_locale, revision_id=None):
                 curr_rev = doc.current_revision
 
                 if not rev_form.is_valid():
-
+                    
                     # Was there a mid-air collision?
                     if 'current_rev' in rev_form._errors:
                         # Jump out to a function to escape indentation hell
@@ -896,6 +685,18 @@ def edit_document(request, document_slug, document_locale, revision_id=None):
                                 rev, doc)
 
                 else:
+                    
+                    if 'slug' in post_data:
+                        slug_split.append(post_data['slug'])
+                        post_data['slug'] = '/'.join(slug_split)
+
+                    # We know now that the form is valid (i.e. slug doesn't have a "/")
+                    # Now we can make it a true revision form
+                    rev_form = RevisionForm(post_data,
+                                            is_iframe_target=is_iframe_target,
+                                            section_id=section_id)
+                    rev_form.instance.document = doc  # for rev_form.clean()
+                    
                     _save_rev_and_notify(rev_form, user, doc)
 
                     if is_iframe_target:
@@ -1041,10 +842,9 @@ def preview_revision(request):
     if request.POST.get('doc_id', False):
         doc = Document.objects.get(id=request.POST.get('doc_id'))
 
-    if _run_kumascript(doc, request):
-        wiki_content, kumascript_errors = _perform_kumascript_post(
-                                                                request,
-                                                                wiki_content)
+    if kumascript.should_use_rendered(doc, request.GET):
+        wiki_content, kumascript_errors = kumascript.post(request,
+                                                          wiki_content)
     # TODO: Get doc ID from JSON.
     data = {'content': wiki_content, 'title': request.POST.get('title', ''),
             'kumascript_errors': kumascript_errors}
@@ -1138,7 +938,7 @@ def review_revision(request, document_slug, document_locale, revision_id):
             ApproveRevisionInLocaleEvent(rev).fire(exclude=rev.creator)
 
             # Schedule KB rebuild?
-            schedule_rebuild_kb()
+            # schedule_rebuild_kb()
 
             return HttpResponseRedirect(reverse('wiki.document_revisions',
                                                 args=[document.full_path]))
@@ -1195,6 +995,7 @@ def select_locale(request, document_slug, document_locale):
 @login_required
 @process_document_path
 @check_readonly
+@transaction.autocommit # For rendering bookkeeping, needs immediate updates
 def translate(request, document_slug, document_locale, revision_id=None):
     """Create a new translation of a wiki document.
 
@@ -1213,7 +1014,7 @@ def translate(request, document_slug, document_locale, revision_id=None):
         # param is the best way to avoid the MindTouch-legacy locale
         # redirection logic.
         document_locale = request.REQUEST.get('tolocale',
-                                              settings.WIKI_DEFAULT_LANGUAGE)
+                                              document_locale)
 
     # Handle parent slug
     full_parent_slug = document_slug
@@ -1221,6 +1022,9 @@ def translate(request, document_slug, document_locale, revision_id=None):
     specific_slug = parent_slug_split[-1]
     parent_slug_split.pop()
     parent_slug = '/'.join(parent_slug_split)
+
+    # Set a "Discard Changes" page
+    discard_href = ''
 
     if settings.WIKI_DEFAULT_LANGUAGE == document_locale:
         # Don't translate to the default language.
@@ -1258,9 +1062,12 @@ def translate(request, document_slug, document_locale, revision_id=None):
     if user_has_doc_perm:
         if doc:
             # If there's an existing doc, populate form from it.
+            discard_href = doc.get_absolute_url()
+            doc.slug = specific_slug
             doc_initial = _document_form_initial(doc)
         else:
             # If no existing doc, bring over the original title and slug.
+            discard_href = parent_doc.get_absolute_url()
             doc_initial = {'title': based_on_rev.title,
                            'slug': specific_slug}
         doc_form = DocumentForm(initial=doc_initial)
@@ -1280,25 +1087,33 @@ def translate(request, document_slug, document_locale, revision_id=None):
         which_form = request.POST.get('form', 'both')
         doc_form_invalid = False
 
+        # Grab the posted slug value in case it's invalid
+        posted_slug = request.POST.get('slug', specific_slug)
+        parent_slug_split.append(posted_slug)
+        destination_slug = '/'.join(parent_slug_split)
+
         if user_has_doc_perm and which_form in ['doc', 'both']:
             disclose_description = True
             post_data = request.POST.copy()
 
             post_data.update({'locale': document_locale})
+            post_data.update({'slug': destination_slug})
+
             doc_form = DocumentForm(post_data, instance=doc)
             doc_form.instance.locale = document_locale
             doc_form.instance.parent = parent_doc
             if which_form == 'both':
-                rev_form = RevisionForm(post_data)
+                # Sending a new copy of post so the slug change above
+                # doesn't cause problems during validation
+                rev_form = RevisionValidationForm(request.POST.copy())
 
             # If we are submitting the whole form, we need to check that
             # the Revision is valid before saving the Document.
             if doc_form.is_valid() and (which_form == 'doc' or
                                         rev_form.is_valid()):
+                rev_form = RevisionForm(post_data)
                 doc = doc_form.save(parent_doc)
-
-                # Possibly schedule a rebuild.
-                _maybe_schedule_rebuild(doc_form)
+                doc.schedule_rendering('max-age=0')
 
                 if which_form == 'doc':
                     url = urlparams(reverse('wiki.edit_document',
@@ -1306,24 +1121,21 @@ def translate(request, document_slug, document_locale, revision_id=None):
                                             locale=doc.locale),
                                     opendescription=1)
                     return HttpResponseRedirect(url)
-
-                doc_slug = doc_form.cleaned_data['slug']
             else:
+                doc_form.data['slug'] = posted_slug
                 doc_form_invalid = True
-        else:
-            doc_slug = doc.slug
 
         if doc and user_has_rev_perm and which_form in ['rev', 'both']:
-
             post_data = request.POST.copy()
 
-            # append final slug
-            parent_slug_split.append(post_data['slug'])
-            post_data['slug'] = '/'.join(parent_slug_split)
-
-            rev_form = RevisionForm(post_data)
+            rev_form = RevisionValidationForm(post_data)
             rev_form.instance.document = doc  # for rev_form.clean()
+
             if rev_form.is_valid() and not doc_form_invalid:
+                # append final slug
+                post_data['slug'] = destination_slug
+                rev_form = RevisionForm(post_data)
+
                 _save_rev_and_notify(rev_form, request.user, doc)
                 url = reverse('wiki.document', args=[doc.full_path],
                               locale=doc.locale)
@@ -1334,7 +1146,8 @@ def translate(request, document_slug, document_locale, revision_id=None):
                          'document_form': doc_form, 'revision_form': rev_form,
                          'locale': document_locale, 'based_on': based_on_rev,
                          'disclose_description': disclose_description,
-                         'specific_slug': specific_slug, 'parent_slug': parent_slug})
+                         'specific_slug': specific_slug, 'parent_slug': parent_slug,
+                         'discard_href': discard_href})
 
 
 @waffle_flag('kumawiki')
@@ -1537,17 +1350,11 @@ def _save_rev_and_notify(rev_form, creator, document):
     """Save the given RevisionForm and send notifications."""
     new_rev = rev_form.save(creator, document)
 
-    _invalidate_kumascript_cache(document)
+    document.schedule_rendering('max-age=0')
 
     # Enqueue notifications
     ReviewableRevisionInLocaleEvent(new_rev).fire(exclude=new_rev.creator)
     EditDocumentEvent(new_rev).fire(exclude=new_rev.creator)
-
-
-def _maybe_schedule_rebuild(form):
-    """Try to schedule a KB rebuild if a title or slug has changed."""
-    if 'title' in form.changed_data or 'slug' in form.changed_data:
-        schedule_rebuild_kb()
 
 
 # Legacy MindTouch redirects.
@@ -1580,8 +1387,8 @@ def mindtouch_namespace_redirect(request, namespace, slug):
     en-US.
     """
     new_locale = new_slug = None
-    if namespace == 'Talk':
-        # Talk pages carry the old locale in their URL, which
+    if namespace in ('Talk', 'Project', 'Project_talk'):
+        # These namespaces carry the old locale in their URL, which
         # simplifies figuring out where to send them.
         locale, _, doc_slug = slug.partition('/')
         new_locale = settings.MT_TO_KUMA_LOCALE_MAP.get(locale, 'en-US')
@@ -1617,6 +1424,9 @@ def mindtouch_to_kuma_redirect(request, path):
         # MindTouch's default templates. There shouldn't be links to
         # them anywhere in the wild, but just in case we 404 them.
         raise Http404
+    if path.endswith('/'):
+        # If there's a trailing slash, snip it off.
+        path = path[:-1]
     if ':' in path:
         namespace, _, slug = path.partition(':')
         # The namespaces (Talk:, User:, etc.) get their own
@@ -1686,3 +1496,76 @@ def load_documents(request):
     return render_to_response('admin/wiki/document/load_data_form.html',
                               context,
                               context_instance=RequestContext(request))
+
+
+def raw_file(request, attachment_id, filename):
+    """Serve up an attachment's file."""
+    # TODO: For now this just grabs and serves the file in the most
+    # naive way. This likely has performance and security implications.
+    attachment = get_object_or_404(Attachment, pk=attachment_id)
+    if attachment.current_revision is None:
+        raise Http404
+    rev = attachment.current_revision
+    resp = HttpResponse(rev.file.read(), mimetype=rev.mime_type)
+    resp["Last-Modified"] = rev.created
+    resp["Content-Length"] = rev.file.size
+    return resp
+
+
+def mindtouch_file_redirect(request, file_id, filename):
+    """Redirect an old MindTouch file URL to a new kuma file URL."""
+    attachment = get_object_or_404(Attachment, mindtouch_attachment_id=file_id)
+    return HttpResponsePermanentRedirect(attachment.get_file_url())
+
+
+def attachment_detail(request, attachment_id):
+    """Detail view of an attachment."""
+    attachment = get_object_or_404(Attachment, pk=attachment_id)
+    return jingo.render(request, 'wiki/attachment_detail.html',
+                        {'attachment': attachment})
+
+
+def attachment_history(request, attachment_id):
+    """Detail view of an attachment."""
+    # For now this is just attachment_detail with a different
+    # template. At some point in the near future, it'd be nice to add
+    # a few extra bits, like the ability to set an arbitrary revision
+    # to be current.
+    attachment = get_object_or_404(Attachment, pk=attachment_id)
+    return jingo.render(request, 'wiki/attachment_history.html',
+                        {'attachment': attachment})
+
+@login_required
+def new_attachment(request):
+    """Create a new Attachment object and populate its initial
+    revision."""
+    if request.method == 'POST':
+        form = AttachmentRevisionForm(data=request.POST, files=request.FILES)
+        if form.is_valid():
+            rev = form.save(commit=False)
+            rev.creator = request.user
+            attachment = Attachment.objects.create(title=rev.title,
+                                                   slug=rev.slug)
+            rev.attachment = attachment
+            rev.save()
+            return HttpResponseRedirect(attachment.get_absolute_url())
+    form = AttachmentRevisionForm()
+    return jingo.render(request, 'wiki/new_attachment.html',
+                        {'form': form})
+
+
+@login_required
+def edit_attachment(request, attachment_id):
+    attachment = get_object_or_404(Attachment,
+                                   pk=attachment_id)
+    if request.method == 'POST':
+        form = AttachmentRevisionForm(data=request.POST, files=request.FILES)
+        if form.is_valid():
+            rev = form.save(commit=False)
+            rev.creator = request.user
+            rev.attachment = attachment
+            rev.save()
+            return HttpResponseRedirect(attachment.get_absolute_url())
+    form = AttachmentRevisionForm()
+    return jingo.render(request, 'wiki/edit_attachment.html',
+                        {'form': form})

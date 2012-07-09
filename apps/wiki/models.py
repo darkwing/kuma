@@ -1,10 +1,12 @@
 import logging
 from collections import namedtuple
-from datetime import datetime
+from datetime import datetime, timedelta
 from itertools import chain
 from urlparse import urlparse
 import hashlib
+import re
 import time
+import json
 
 from pyquery import PyQuery
 from tower import ugettext_lazy as _lazy, ugettext as _
@@ -16,29 +18,34 @@ from django.core import serializers
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.urlresolvers import resolve
-from django.db import models
+from django.db import models, transaction
 from django.http import Http404
 from django.utils.http import http_date
 
 from south.modelsinspector import add_introspection_rules
+
+import constance.config
 
 from notifications.models import NotificationsMixin
 from sumo import ProgrammingError
 from sumo_locales import LOCALES
 from sumo.models import ManagerBase, ModelBase, LocaleField
 from sumo.urlresolvers import reverse, split_path
-from wiki import TEMPLATE_TITLE_PREFIX
-import wiki.content
 
 from taggit.models import ItemBase, TagBase
 from taggit.managers import TaggableManager
 from taggit.utils import parse_tags
 
+from wiki import TEMPLATE_TITLE_PREFIX
+import wiki.content
+
+from . import kumascript
 
 ALLOWED_TAGS = bleach.ALLOWED_TAGS + [
     'div', 'span', 'p', 'br', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
     'pre', 'code',
     'dl', 'dt', 'dd', 'small', 'sub', 'sup', 'u', 'strike', 'samp',
+    'ul', 'ol', 'li',
     'nobr', 'dfn', 'caption', 'var',
     'img',
     'input', 'label', 'select', 'option', 'textarea',
@@ -52,7 +59,10 @@ ALLOWED_ATTRIBUTES = bleach.ALLOWED_ATTRIBUTES
 ALLOWED_ATTRIBUTES['div'] = ['style', 'class', 'id']
 ALLOWED_ATTRIBUTES['p'] = ['style', 'class', 'id', 'align']
 ALLOWED_ATTRIBUTES['pre'] = ['style', 'class', 'id']
-ALLOWED_ATTRIBUTES['span'] = ['style', 'title']
+ALLOWED_ATTRIBUTES['ul'] = ['style', 'class', 'id']
+ALLOWED_ATTRIBUTES['ol'] = ['style', 'class', 'id']
+ALLOWED_ATTRIBUTES['li'] = ['style', 'class', 'id']
+ALLOWED_ATTRIBUTES['span'] = ['style', 'class', 'title']
 ALLOWED_ATTRIBUTES['img'] = ['src', 'id', 'align', 'alt', 'class', 'is',
                              'title', 'style']
 ALLOWED_ATTRIBUTES['a'] = ['style', 'id', 'class', 'href', 'title']
@@ -78,7 +88,11 @@ ALLOWED_STYLES = [
     'font', 'font-size', 'font-weight', 'font-family', 
     'text-align', 'text-transform',
     '-moz-column-width', '-webkit-columns', 'columns', 'width',
-    'list-style-type'
+    'list-style-type',
+    'color',
+    'box-shadow', '-moz-box-shadow', '-webkit-box-shadow', '-o-box-shadow',
+    'linear-gradient', '-moz-linear-gradient', '-webkit-linear-gradient',
+    'radial-gradient', '-moz-radial-gradient', '-webkit-radial-gradient',
 ]
 
 # Disruptiveness of edits to translated versions. Numerical magnitude indicate
@@ -182,6 +196,9 @@ RESERVED_SLUGS = (
 )
 
 DOCUMENT_LAST_MODIFIED_CACHE_KEY_TMPL = u'kuma:document-last-modified:%s'
+
+DEKI_FILE_URL = re.compile(r'@api/deki/files/(?P<file_id>\d+)/=')
+KUMA_FILE_URL = re.compile(r'/files/(?P<file_id>\d+)/.+\..+')
 
 
 class UniqueCollision(Exception):
@@ -366,6 +383,18 @@ class TaggedDocument(ItemBase):
             taggeddocument__content_object__isnull=False).distinct()
 
 
+class DocumentRenderingInProgress(Exception):
+    """An attempt to render a page while a rendering is already in progress is
+    disallowed."""
+    pass
+
+
+class DocumentRenderedContentNotAvailable(Exception):
+    """No rendered content available, and an attempt to render on the spot was
+    denied. So, the view should fall back to presenting raw content for now."""
+    pass
+
+
 class Document(NotificationsMixin, ModelBase):
     """A localized knowledgebase document, not revision-specific."""
     objects = DocumentManager()
@@ -410,8 +439,27 @@ class Document(NotificationsMixin, ModelBase):
                                                through='RelatedDocument',
                                                symmetrical=False)
 
-    # Cached HTML rendering of approved revision's wiki markup:
+    # Raw HTML of approved revision's wiki markup
     html = models.TextField(editable=False)
+
+    # Cached result of kumascript and other offline processors (if any)
+    rendered_html = models.TextField(editable=False, blank=True, null=True)
+
+    # Errors (if any) from the last rendering run
+    rendered_errors = models.TextField(editable=False, blank=True, null=True)
+
+    # Whether or not to automatically defer rendering of this page to a queued
+    # offline task. Generally used for complex pages that need time
+    defer_rendering = models.BooleanField(default=False, db_index=True)
+
+    # Timestamp when this document was last scheduled for a render
+    render_scheduled_at = models.DateTimeField(null=True, db_index=True)
+
+    # Timestamp when a render for this document was last started
+    render_started_at = models.DateTimeField(null=True, db_index=True)
+
+    # Timestamp when this document was last rendered
+    last_rendered_at = models.DateTimeField(null=True, db_index=True)
 
     # A document's category much always be that of its parent. If it has no
     # parent, it can do what it wants. This invariant is enforced in save().
@@ -431,6 +479,135 @@ class Document(NotificationsMixin, ModelBase):
     # operating_systems:
     #    defined in the respective classes below. Use them as in
     #    test_firefox_versions.
+
+    @property
+    def is_rendering_scheduled(self):
+        """Does this have a rendering scheduled?"""
+        if not self.render_scheduled_at:
+            return False
+
+        # Check whether a scheduled rendering has waited for too long.  Assume
+        # failure, in this case, and allow another scheduling attempt.
+        timeout = constance.config.KUMA_DOCUMENT_RENDER_TIMEOUT
+        max_duration = timedelta(seconds=timeout)
+        duration = datetime.now() - self.render_scheduled_at
+        if (duration > max_duration):
+            return False
+
+        if not self.last_rendered_at:
+            return True
+        return self.render_scheduled_at > self.last_rendered_at
+
+    @property
+    def is_rendering_in_progress(self):
+        """Does this have a rendering in progress?"""
+        if not self.render_started_at:
+            # No start time, so False.
+            return False
+
+        # Check whether an in-progress rendering has gone on for too long.
+        # Assume failure, in this case, and allow another rendering attempt.
+        timeout = constance.config.KUMA_DOCUMENT_RENDER_TIMEOUT
+        max_duration = timedelta(seconds=timeout)
+        duration = datetime.now() - self.render_started_at
+        if (duration > max_duration):
+            return False
+        
+        if not self.last_rendered_at:
+            # No rendering ever, so in progress.
+            return True
+
+        # Finally, if the render start is more recent than last completed
+        # render, then we have one in progress.
+        return self.render_started_at > self.last_rendered_at
+
+    def get_rendered(self, cache_control=None, base_url=None):
+        """Attempt to get rendered content for this document"""
+        # No rendered content yet, so schedule the first render.
+        if not self.rendered_html:
+            try:
+                self.schedule_rendering(cache_control, base_url)
+            except DocumentRenderingInProgress:
+                # Unable to trigger a rendering right now, so we bail.
+                raise DocumentRenderedContentNotAvailable()
+        
+        # If we have a cache_control directive, try scheduling a render.
+        if cache_control:
+            try:
+                self.schedule_rendering(cache_control, base_url)
+            except DocumentRenderingInProgress:
+                pass
+
+        # If the above resulted in an immediate render, we might have content.
+        if not self.rendered_html:
+            # But, no such luck, so bail out.
+            raise DocumentRenderedContentNotAvailable()
+
+        # Parse JSON errors, if available.
+        errors = None
+        try:
+            errors = (self.rendered_errors and
+                      json.loads(self.rendered_errors) or None)
+        except ValueError:
+            pass
+
+        return (self.rendered_html, errors)
+
+    def schedule_rendering(self, cache_control=None, base_url=None):
+        """Attempt to schedule rendering. Honor the deferred_rendering field to
+        decide between an immediate or a queued render."""
+        # Avoid scheduling a rendering if already scheduled or in progress.
+        if self.is_rendering_scheduled or self.is_rendering_in_progress:
+            return False
+
+        # Note when the rendering was scheduled. Kind of a hack, doing a quick
+        # update and setting the local property rather than doing a save()
+        now = datetime.now()
+        Document.objects.filter(pk=self.pk).update(render_scheduled_at=now)
+        self.render_scheduled_at = now
+        
+        if not self.defer_rendering:
+            # Attempt an immediate rendering.
+            self.render(cache_control, base_url)
+        else:
+            # Attempt to queue a rendering. If celery.conf.ALWAYS_EAGER is
+            # True, this is also an immediate rendering.
+            from . import tasks
+            tasks.render_document.delay(self, cache_control, base_url)
+
+    def render(self, cache_control=None, base_url=None, timeout=None):
+        """Render content using kumascript and any other services necessary."""
+        # Disallow rendering while another is in progress.
+        if self.is_rendering_in_progress:
+            raise DocumentRenderingInProgress()
+
+        # Note when the rendering was started. Kind of a hack, doing a quick
+        # update and setting the local property rather than doing a save()
+        now = datetime.now()
+        Document.objects.filter(pk=self.pk).update(render_started_at=now)
+        self.render_started_at = now
+
+        # Perform rendering and update document
+        self.rendered_html, errors = kumascript.get(self, cache_control,
+                                                    base_url, timeout=timeout)
+        self.rendered_errors = errors and json.dumps(errors) or None
+
+        # Finally, note the end time of rendering and update the document.
+        self.last_rendered_at = datetime.now()
+        
+        # If this rendering took longer than we'd like, mark it for deferred
+        # rendering in the future.
+        timeout = constance.config.KUMA_DOCUMENT_FORCE_DEFERRED_TIMEOUT
+        max_duration = timedelta(seconds=timeout)
+        duration = self.last_rendered_at - self.render_started_at
+        if (duration >= max_duration):
+            self.defer_rendering = True
+
+        # TODO: Automatically clear the defer_rendering flag if the rendering
+        # time falls under the limit? Probably safer to require manual
+        # intervention to free docs from deferred jail.
+
+        self.save()
 
     def natural_key(self):
         return (self.locale, self.slug,)
@@ -620,6 +797,33 @@ class Document(NotificationsMixin, ModelBase):
             return None
 
         return self.current_revision.content_parsed
+
+    @property
+    def attachments(self):
+        # Is there a more elegant way to do this?
+        #
+        # File attachments aren't really stored at the DB level;
+        # instead, the page just gets appropriate HTML to embed
+        # whatever type of file it is. So we find them by
+        # regex-searching over the HTML for URLs that match the
+        # file URL patterns.
+        mt_files = DEKI_FILE_URL.findall(self.html)
+        kuma_files = KUMA_FILE_URL.findall(self.html)
+        mt_q = kuma_q = params = None
+
+        if mt_files:
+            # We have at least some MindTouch files.
+            params = models.Q(mindtouch_attachment_id__in=mt_files)
+            if kuma_files:
+                # We also have some kuma files. Use an OR query.
+                params = params | models.Q(id__in=kuma_files)
+        if kuma_files and not params:
+            # We have only kuma files.
+            params = models.Q(id__in=kuma_files)
+        if params:
+            return Attachment.objects.filter(params)
+        # If no files found, return an empty Attachment queryset.
+        return Attachment.objects.none()
 
     @property
     def show_toc(self):
@@ -1133,3 +1337,122 @@ def get_current_or_latest_revision(document, reviewed_only=True):
     return rev
 
 add_introspection_rules([], ["^utils\.OverwritingFileField"])
+
+
+def rev_upload_to(instance, filename):
+    """
+    Generate a path to store a file attachment.
+    
+    """
+    # TODO: We could probably just get away with strftime formatting
+    # in the 'upload_to' argument here, but this does a bit more to be
+    # extra-safe with potential duplicate filenames.
+    #
+    # For now, the filesystem storage path will look like this:
+    #
+    # attachments/year/month/day/attachment_id/md5/filename
+    #
+    # The md5 hash here is of the full timestamp, down to the
+    # microsecond, of when the path is generated.
+    now = datetime.now()
+    return "attachments/%(date)s/%(id)s/%(md5)s/%(filename)s" % {
+        'date': now.strftime('%Y/%m/%d'),
+        'id': instance.attachment.id,
+        'md5': hashlib.md5(str(now)).hexdigest(),
+        'filename': filename
+    }
+    
+
+class Attachment(models.Model):
+    """
+    An attachment which can be inserted into one or more wiki documents.
+
+    There is no direct database-level relationship between attachments
+    and documents; insertion of an attachment is handled through
+    markup in the document.
+    
+    """
+    current_revision = models.ForeignKey('AttachmentRevision', null=True,
+                                         related_name='current_rev')
+
+    # These get filled from the current revision.
+    title = models.CharField(max_length=255, db_index=True)
+    slug = models.CharField(max_length=255, db_index=True)
+
+    # This is somewhat like the bookkeeping we do for Documents, but
+    # is also slightly more permanent because storing this ID lets us
+    # map from old MindTouch file URLs (which are based on the ID) to
+    # new kuma file URLs.
+    mindtouch_attachment_id = models.IntegerField(
+        help_text="ID for migrated MindTouch resource",
+        null=True, db_index=True)
+    modified = models.DateTimeField(auto_now=True, null=True, db_index=True)
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ('wiki.attachment_detail', (), {'attachment_id': self.id})
+
+    @models.permalink
+    def get_file_url(self):
+        return ('wiki.raw_file', (), {'attachment_id': self.id,
+                                      'filename': self.current_revision.filename()})
+        
+
+class AttachmentRevision(models.Model):
+    """
+    A revision of an attachment.
+    
+    """
+    attachment = models.ForeignKey(Attachment, related_name='revisions')
+
+    file = models.FileField(upload_to=rev_upload_to, max_length=500)
+
+    title = models.CharField(max_length=255, null=True, db_index=True)
+    slug = models.CharField(max_length=255, null=True, db_index=True)
+    
+    # This either comes from the MindTouch import or, for new files,
+    # from the (as-yet-unwritten) upload view using the Python
+    # mimetypes library to figure it out.
+    #
+    # TODO: do we want to make this an explicit set of choices? That'd
+    # rule out certain types of attachments, but might be a lot safer.
+    mime_type = models.CharField(max_length=255, db_index=True)
+
+    description = models.TextField() # Does not allow wiki markup currently.
+
+    created = models.DateTimeField(default=datetime.now)
+    comment = models.CharField(max_length=255)
+    creator = models.ForeignKey(User, related_name='created_attachment_revisions')
+    is_approved = models.BooleanField(default=True, db_index=True)
+
+    # As with document revisions, bookkeeping for the MindTouch
+    # migration.
+    #
+    # TODO: Do we actually need full file revision history from
+    # MindTouch?
+    mindtouch_old_id = models.IntegerField(
+        help_text="ID for migrated MindTouch resource revision",
+        null=True, db_index=True, unique=True)
+    is_mindtouch_migration = models.BooleanField(
+        default=False, db_index=True,
+        help_text="Did this revision come from MindTouch?")
+
+    def filename(self):
+        return self.file.path.split('/')[-1]
+
+    def save(self, *args, **kwargs):
+        super(AttachmentRevision, self).save(*args, **kwargs)
+        if self.is_approved and (
+                not self.attachment.current_revision or
+                self.attachment.current_revision.id < self.id):
+            self.make_current()
+    
+    def make_current(self):
+        """
+        Make this revision the current one for the attachment.
+        
+        """
+        self.attachment.title = self.title
+        self.attachment.slug = self.slug
+        self.attachment.current_revision = self
+        self.attachment.save()

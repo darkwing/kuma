@@ -49,6 +49,23 @@ urlpatterns = patterns('',
 
     #url(r'^', include('dashboards.urls')),
 
+    # Files.
+    url(r'^files/new/$',
+        'wiki.views.new_attachment',
+        name='wiki.new_attachment'),
+    url(r'^files/(?P<attachment_id>\d+)/$',
+        'wiki.views.attachment_detail',
+        name='wiki.attachment_detail'),
+    url(r'^files/(?P<attachment_id>\d+)/edit/$',
+        'wiki.views.edit_attachment',
+        name='wiki.edit_attachment'),
+    url(r'^files/(?P<attachment_id>\d+)/history/$',
+        'wiki.views.attachment_history',
+        name='wiki.attachment_history'),
+    url(r'^files/(?P<attachment_id>\d+)/(?P<filename>.+)$',
+        'wiki.views.raw_file',
+        name='wiki.raw_file'),
+
     # Users
     ('', include('users.urls')),
 
@@ -58,6 +75,9 @@ urlpatterns = patterns('',
         {'document_root': settings.HUMANSTXT_ROOT, 'path': 'humans.txt'}),
 
     # Legacy MindTouch redirects.
+    url(r'^@api/deki/files/(?P<file_id>\d+)/=(?P<filename>.+)$',
+        'wiki.views.mindtouch_file_redirect',
+        name='wiki.mindtouch_file_redirect'),
     (r'^(?P<path>.*)$', 'wiki.views.mindtouch_to_kuma_redirect'),
 )
 
