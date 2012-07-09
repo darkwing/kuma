@@ -610,6 +610,16 @@ def edit_document(request, document_slug, document_locale, revision_id=None):
         is_iframe_target = request.GET.get('iframe', False)
         is_raw = request.GET.get('raw', False)
         need_edit_links = request.GET.get('edit_links', False)
+        parent_id = request.POST.get('parent_id', '')
+
+        # Attempt to set a parent
+        if show_translation_parent_block and parent_id:
+            try:
+                parent_doc = get_object_or_404(Document, id=parent_id)
+                doc.parent = parent_doc
+            except Document.DoesNotExist:
+                logging.debug('Could not find posted parent')
+
 
         # Comparing against localized names for the Save button bothers me, so
         # I embedded a hidden input:
