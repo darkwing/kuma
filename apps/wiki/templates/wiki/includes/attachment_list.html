@@ -3,7 +3,7 @@
 <section id="page-attachments">
   <h2>{{ _('Attachments') }} (<span id="page-attachments-count">{{ attachment_data | length}}</span>)</h2>
 
-  {% if show_attach_button and attachment_form %}
+  {% if show_attach_button and attachment_form_set %}
   <p class="add">
     <a href="javascript:;" id="page-attachments-button">Attach Files</a>
   </p>
@@ -31,24 +31,32 @@
     </tbody>
   </table>
 
-  {% if show_attach_button and attachment_form %}
-  <form method="post" action="{{ url('wiki.new_attachment') }}" id="page-attachments-form" enctype="multipart/form-data">
+  {% if show_attach_button and attachment_form_set %}
+  <form method="post" action="{{ url('wiki.upload_multiple') }}" id="page-attachments-form" enctype="multipart/form-data">
   <table cellpadding="0" cellspacing="0" id="page-attachments-new-table" class="hidden">
     <thead>
-      <th class="hidden page-attachment-actions-cell">&nbsp;</th>
       <th>{{ _('File') }}</th>
       <th>{{ _('Title') }}</th>
       <th>{{ _('Description') }}</th>
       <th>{{ _('Comments') }}</th>
     </thead>
     <tbody>
+      {#
       <tr>
-        <td class="hidden page-attachment-actions-cell"><a href="javascript:;" class="hidden delete-attachment">Delete</a></td>
         <td class="page-attachment-actions-file-cell">{{ attachment_form.file | safe }}</td>
         <td>{{ attachment_form.title | safe }}</td>
         <td>{{ attachment_form.description | safe }}</td>
         <td>{{ attachment_form.comment | safe }}</td>
       </tr>
+      #}
+      {% for row in attachment_form_set.forms %}
+        <tr>
+          <td class="page-attachment-actions-file-cell">{{ row.file | safe }}</td>
+          <td>{{ row.title | safe }}</td>
+          <td>{{ row.description | safe }}</td>
+          <td>{{ row.comment | safe }}</td>
+        </tr>
+      {% endfor %}
       <tr>
         <td colspan="4">
           <input type="submit" name="submit" value="Upload" />

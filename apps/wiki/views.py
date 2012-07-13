@@ -534,7 +534,7 @@ def new_document(request):
                              'parent_id': initial_parent_id,
                              'document_form': doc_form,
                              'revision_form': rev_form,
-                             'attachment_form': AttachmentRevisionForm(),
+                             'attachment_form_set': AttachmentRevisionFormSet(),
                              'parent_path': parent_path})
 
     post_data = request.POST.copy()
@@ -573,7 +573,7 @@ def new_document(request):
                         {'is_template': is_template,
                          'document_form': doc_form,
                          'revision_form': rev_form,
-                         'attachment_form': AttachmentRevisionForm(),
+                         'attachment_form_set': AttachmentRevisionFormSet(),
                          'parent_slug': parent_slug,
                          'parent_path': parent_path})
 
@@ -793,7 +793,7 @@ def edit_document(request, document_slug, document_locale, revision_id=None):
                          'parent_path': parent_path,
                          'revision': rev,
                          'document': doc,
-                         'attachment_form': AttachmentRevisionForm(),
+                         'attachment_form_set': AttachmentRevisionFormSet(),
                          'attachment_data': attachments,
                          'attachment_data_json': json.dumps(attachments)})
 
@@ -1567,6 +1567,7 @@ def attachment_history(request, attachment_id):
                          'revision': attachment.current_revision})
 
 @login_required
+@require_POST
 def new_attachment(request):
     """Create a new Attachment object and populate its initial
     revision."""
@@ -1594,16 +1595,13 @@ def new_attachment(request):
                 }
                 response = jingo.render(request, 'wiki/includes/attachment_upload_results.html',
                         { 'result': json.dumps([error_obj]) })
-    else:
-        form = AttachmentRevisionForm()
-        response = jingo.render(request, 'wiki/new_attachment.html',
-                            {'form': form})
         
     response['x-frame-options'] = 'SAMEORIGIN'
     return response
 
 
 @login_required
+@require_POST
 def upload_multiple(request):
     """Upload multiple new file attachments in one go."""
     # This view is designed to *only* be used via AJAX while editing a
@@ -1631,9 +1629,6 @@ def upload_multiple(request):
             response = jingo.render(request,
                                     'wiki/includes/attachment_multiple_upload_results.html',
                                     {'result': json.dumps(error_obj)})
-                                    
-    else:
-        formset = AttachmentRevisionFormSet(extra=2, max_num=20)
 
     response = jingo.render(request, 'wiki/upload_multiple.html',
                             {'formset': formset})
@@ -1642,19 +1637,18 @@ def upload_multiple(request):
 
 
 @login_required
+@require_POST
 def edit_attachment(request, attachment_id):
     attachment = get_object_or_404(Attachment,
                                    pk=attachment_id)
-    if request.method == 'POST':
-        form = AttachmentRevisionForm(data=request.POST, files=request.FILES)
-        if form.is_valid():
-            rev = form.save(commit=False)
-            rev.creator = request.user
-            rev.attachment = attachment
-            rev.save()
-            return HttpResponseRedirect(attachment.get_absolute_url())
-    else:
-        form = AttachmentRevisionForm()
+
+    form = AttachmentRevisionForm(data=request.POST, files=request.FILES)
+    if form.is_valid():
+        rev = form.save(commit=False)
+        rev.creator = request.user
+        rev.attachment = attachment
+        rev.save()
+        return HttpResponseRedirect(attachment.get_absolute_url())
 
     return jingo.render(request, 'wiki/edit_attachment.html',
                         {'form': form})

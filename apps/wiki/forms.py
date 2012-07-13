@@ -429,4 +429,4 @@ class AttachmentRevisionForm(forms.ModelForm):
 
         return rev
 
-AttachmentRevisionFormSet = modelformset_factory(AttachmentRevisionForm)
+AttachmentRevisionFormSet = modelformset_factory(AttachmentRevision, AttachmentRevisionForm)
