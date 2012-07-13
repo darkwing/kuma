@@ -1587,10 +1587,10 @@ def new_attachment(request):
             else:
                 return HttpResponseRedirect(attachment.get_absolute_url())
         else:
-            if request.POST.get('is_ajax', ''):
+            if request.POST.get('is_ajax'):
                 error_obj = {
                     'title': request.POST.get('is_ajax', ''),
-                    'error': _(u'The file provided is not valid')
+                    'error': _(u'The file provided is not valid'),
                 }
                 response = jingo.render(request, 'wiki/includes/attachment_upload_results.html',
                         { 'result': json.dumps([error_obj]) })
@@ -1634,6 +1634,7 @@ def upload_multiple(request):
                                     
     else:
         formset = AttachmentRevisionFormSet(extra=2, max_num=20)
+
     response = jingo.render(request, 'wiki/upload_multiple.html',
                             {'formset': formset})
     response['x-frame-options'] = 'SAMEORIGIN'
@@ -1652,7 +1653,8 @@ def edit_attachment(request, attachment_id):
             rev.attachment = attachment
             rev.save()
             return HttpResponseRedirect(attachment.get_absolute_url())
-    form = AttachmentRevisionForm()
+    else:
+        form = AttachmentRevisionForm()
 
     return jingo.render(request, 'wiki/edit_attachment.html',
                         {'form': form})
