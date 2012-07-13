@@ -4,6 +4,7 @@ import re
 
 from django import forms
 from django.utils.encoding import smart_str
+from django.forms.models import modelformset_factory
 from django.forms.widgets import CheckboxSelectMultiple
 
 from tower import ugettext_lazy as _lazy
@@ -427,3 +428,5 @@ class AttachmentRevisionForm(forms.ModelForm):
         rev.mime_type = mime_type
 
         return rev
+
+AttachmentRevisionFormSet = modelformset_factory(AttachmentRevisionForm)

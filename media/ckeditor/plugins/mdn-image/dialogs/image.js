@@ -371,7 +371,6 @@ For licensing, see LICENSE.html or http://ckeditor.com/license
 					this.preview.removeAttribute( 'src' );
 					this.preview.setStyle( 'display', 'none' );
 				}
-
 				// Update the attachments dropdown
 				// For some reason, setup() doesn't automagically get called on any input in this dialog
 				// So I'm calling it myself

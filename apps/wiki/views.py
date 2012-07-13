@@ -51,7 +51,7 @@ from wiki.decorators import check_readonly
 from wiki.events import (EditDocumentEvent, ReviewableRevisionInLocaleEvent,
                          ApproveRevisionInLocaleEvent)
 from wiki.forms import (DocumentForm, RevisionForm, ReviewForm, RevisionValidationForm,
-                        AttachmentRevisionForm)
+                        AttachmentRevisionForm, AttachmentRevisionFormSet)
 from wiki.models import (Document, Revision, HelpfulVote, EditorToolbar,
                          DocumentTag, ReviewTag, Attachment,
                          DocumentRenderingInProgress,
@@ -1581,7 +1581,7 @@ def new_attachment(request):
             rev.attachment = attachment
             rev.save()
 
-            if request.POST.get('is_ajax', ''):
+            if request.POST.get('is_ajax'):
                 response = jingo.render(request, 'wiki/includes/attachment_upload_results.html',
                         { 'result': json.dumps(_format_attachment_obj([attachment])) })
             else:
@@ -1604,6 +1604,43 @@ def new_attachment(request):
 
 
 @login_required
+def upload_multiple(request):
+    """Upload multiple new file attachments in one go."""
+    # This view is designed to *only* be used via AJAX while editing a
+    # document; on valid submission it will return a JSON dump of the
+    # uploaded files.
+    if request.method == 'POST':
+        formset = AttachmentRevisionFormSet(data=request.POST,
+                                            files=request.FILES)
+        if formset.is_valid():
+            instances = formset.save(commit=False)
+            for instance in instances:
+                instance.creator = request.user
+                attachment = Attachment.objects.create(title=instacne.title,
+                                                       slug=instance.slug)
+                instance.attachment = attachment
+                instance.save()
+            response = jingo.render(request,
+                                    'wiki/includes/attachment_multiple_upload_results.html',
+                                    {'result': json.dumps(_format_attachment_obj(instances))})
+        else:
+            error_obj = {
+                'title': 'Error',
+                'error': _(u'One or more of the files provided are not valid.'),
+            }
+            response = jingo.render(request,
+                                    'wiki/includes/attachment_multiple_upload_results.html',
+                                    {'result': json.dumps(error_obj)})
+                                    
+    else:
+        formset = AttachmentRevisionFormSet(extra=2, max_num=20)
+    response = jingo.render(request, 'wiki/upload_multiple.html',
+                            {'formset': formset})
+    response['x-frame-options'] = 'SAMEORIGIN'
+    return response
+
+
+@login_required
 def edit_attachment(request, attachment_id):
     attachment = get_object_or_404(Attachment,
                                    pk=attachment_id)
@@ -1616,5 +1653,6 @@ def edit_attachment(request, attachment_id):
             rev.save()
             return HttpResponseRedirect(attachment.get_absolute_url())
     form = AttachmentRevisionForm()
+
     return jingo.render(request, 'wiki/edit_attachment.html',
                         {'form': form})
