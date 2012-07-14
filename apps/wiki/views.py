@@ -1637,18 +1637,20 @@ def upload_multiple(request):
 
 
 @login_required
-@require_POST
+#@require_POST
 def edit_attachment(request, attachment_id):
     attachment = get_object_or_404(Attachment,
                                    pk=attachment_id)
 
-    form = AttachmentRevisionForm(data=request.POST, files=request.FILES)
-    if form.is_valid():
-        rev = form.save(commit=False)
-        rev.creator = request.user
-        rev.attachment = attachment
-        rev.save()
-        return HttpResponseRedirect(attachment.get_absolute_url())
-
-    return jingo.render(request, 'wiki/edit_attachment.html',
+    if request.method == 'POST':
+        form = AttachmentRevisionForm(data=request.POST, files=request.FILES)
+        if form.is_valid():
+            rev = form.save(commit=False)
+            rev.creator = request.user
+            rev.attachment = attachment
+            rev.save()
+            return HttpResponseRedirect(attachment.get_absolute_url())
+    else:
+        form = AttachmentRevisionForm(attachment_id=attachment_id)
+        return jingo.render(request, 'wiki/edit_attachment.html',
                         {'form': form})
