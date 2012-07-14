@@ -495,6 +495,9 @@ div.bug, div.warning { margin: 0 0 1.5em; border: 2px solid #ac6262; padding: 10
 /*** @WYSIWYG style blocks *********/
 .twocolumns { -moz-column-count: 2; -webkit-column-count: 2; column-count: 2; }
 .threecolumns { -moz-column-count: 3; -webkit-column-count: 3; column-count: 3; }
+.twocolumns p, .threecolumns p { /* mimics mdn-screen.css */
+  margin: 0 0 1.286em;
+}
 
 div.floatright, table.floatright { float: right; clear: right; margin: 0 0 .5em .5em; }
 div.floatleft, table.floatleft { float: left; margin: 0 .5em .5em 0; }
