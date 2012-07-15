@@ -78,7 +78,7 @@ CKEDITOR.mdn = {};
 
 CKEDITOR.editorConfig = function(config) {
 
-    config.extraPlugins = 'autogrow,definitionlist,mdn-buttons,mdn-link,mdn-syntaxhighlighter,mdn-keystrokes,mdn-attachments,mdn-image, mdn-enterkey';
+    config.extraPlugins = 'autogrow,definitionlist,mdn-buttons,mdn-link,mdn-syntaxhighlighter,mdn-keystrokes,mdn-attachments,mdn-image,mdn-enterkey';
     config.removePlugins = 'link,image,tab,enterkey';
     config.entities = false;
     
