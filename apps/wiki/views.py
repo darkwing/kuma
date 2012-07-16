@@ -1614,7 +1614,7 @@ def upload_multiple(request):
             instances = formset.save(commit=False)
             for instance in instances:
                 instance.creator = request.user
-                attachment = Attachment.objects.create(title=instacne.title,
+                attachment = Attachment.objects.create(title=instance.title,
                                                        slug=instance.slug)
                 instance.attachment = attachment
                 instance.save()
@@ -1651,6 +1651,7 @@ def edit_attachment(request, attachment_id):
             rev.save()
             return HttpResponseRedirect(attachment.get_absolute_url())
     else:
-        form = AttachmentRevisionForm(attachment_id=attachment_id)
+        form = AttachmentRevisionForm(id=attachment_id)
+        response['x-frame-options'] = 'SAMEORIGIN'
         return jingo.render(request, 'wiki/edit_attachment.html',
                         {'form': form})
