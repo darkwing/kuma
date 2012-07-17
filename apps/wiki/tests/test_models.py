@@ -26,7 +26,8 @@ from wiki.models import (FirefoxVersion, OperatingSystem, Document, Revision,
                          TaggedDocument,)
 from wiki.tests import (document, revision, doc_rev, translated_revision,
                         create_template_test_users,
-                        create_topical_parents_docs)
+                        create_topical_parents_docs,
+                        create_attachment_test_users)
 from wiki import tasks
 
 
@@ -291,6 +292,19 @@ class PermissionTests(TestCase):
         super(PermissionTests, self).setUp()
         (self.perms, self.groups, self.users, self.superuser) = (
             create_template_test_users())
+
+    def test_attachment_permissions(self):
+
+        # Attempt to add an attachment for user with no perms
+        add_trials = (
+            (True, self.superuser),
+            (False, self.users['none']),
+            (True, self.users['all']),
+            (True, self.users['add']),
+            (True, self.users['edit'])
+        )
+        for test in add_trials()
+            eq_(test[0], test[1].has_perm('wiki.add_attachment'))
 
     def test_template_permissions(self):
         msg = ('should not', 'should')

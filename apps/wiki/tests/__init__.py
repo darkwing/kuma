@@ -168,6 +168,41 @@ def create_template_test_users():
 
     return (perms, groups, users, superuser)
 
+def create_attachment_test_users():
+    perms = dict(
+        (x, [Permission.objects.get(codename='%s_attachment' % x)])
+        for x in ('add', 'edit',)
+    )
+    perms['all'] = perms['add'] + perms['edit']
+
+    groups = {}
+    for x in ('add', 'edit', 'all'):
+        group, created = Group.objects.get_or_create(
+                             name='attachers_%s' % x)
+        if created:
+            group.permissions = perms[x]
+            group.save()
+        groups[x] = [group]
+
+    users = {}
+    for x in  ('none', 'add', 'edit', 'all'):
+        user, created = User.objects.get_or_create(username='attachment_user_%s' % x,
+            defaults=dict(email='attachment_user_%s@example.com',
+                          is_active=True, is_staff=False, is_superuser=False))
+        if created:
+            user.set_password('testpass')
+            user.groups = groups.get(x, [])
+            user.save()
+        users[x] = user
+
+    superuser, created = User.objects.get_or_create(
+        username='attachment_superuser_1', defaults=dict(
+            email='attachment_superuser_1@example.com',
+            is_active=True, is_staff=True, is_superuser=True))
+    if created:
+        superuser.set_password('testpass')
+        superuser.save()
+
 
 def create_topical_parents_docs():
     d1 = document(title='HTML7')

@@ -620,6 +620,8 @@ class Document(NotificationsMixin, ModelBase):
         permissions = (
             ("add_template_document", "Can add Template:* document"),
             ("change_template_document", "Can change Template:* document"),
+            ("add_attachment", "Can add attachments to wiki documents"),
+            ("edit_attachment", "Can edit attachments to wiki documents"),
         )
 
     def _existing(self, attr, value):
