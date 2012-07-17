@@ -1572,8 +1572,8 @@ def new_attachment(request):
     revision."""
 
     # Don't allow users without permission to add an attachment
-    if not request.user.has_perm('wiki.add_attachment'):
-        raise PermissionDenied
+    #if not request.user.has_perm('wiki.add_attachment'):
+        #raise PermissionDenied
     
     if request.method == 'POST':
         form = AttachmentRevisionForm(data=request.POST, files=request.FILES)
@@ -1611,8 +1611,8 @@ def new_attachment(request):
 def edit_attachment(request, attachment_id):
 
     # Don't allow users without permission to edit an attachment
-    if not request.user.has_perm('wiki.edit_attachment'):
-        raise PermissionDenied
+    #if not request.user.has_perm('wiki.edit_attachment'):
+        #raise PermissionDenied
 
     attachment = get_object_or_404(Attachment,
                                    pk=attachment_id)

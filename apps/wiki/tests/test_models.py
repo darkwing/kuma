@@ -300,10 +300,10 @@ class PermissionTests(TestCase):
             (True, self.superuser),
             (False, self.users['none']),
             (True, self.users['all']),
-            (True, self.users['add']),
-            (True, self.users['edit'])
+            (True, self.users['add_attachment']),
+            (True, self.users['edit_attachment']),
         )
-        for test in add_trials()
+        for test in add_trials:
             eq_(test[0], test[1].has_perm('wiki.add_attachment'))
 
     def test_template_permissions(self):
