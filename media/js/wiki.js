@@ -909,6 +909,7 @@
     function initSaveAndEditButtons () {
 
         var STORAGE_NAME = 'wiki-page-edit';
+        var $actionForm = jQuery("#wiki-page-edit, #wiki-page-translate");
 
         if (typeof(window.sessionStorage) != 'undefined') {
             // If there's previous content preserved, load it into the textarea
@@ -925,7 +926,7 @@
                 // Clear any preserved content.
                 window.sessionStorage.setItem(STORAGE_NAME, '');
             }
-            $('#wiki-page-edit')
+            $actionForm
                 .attr('action', '')
                 .removeAttr('target');
             return true;
@@ -942,11 +943,14 @@
                     $('#wiki-page-edit textarea[name=content]').val());
             }
             // Redirect the editor form to the iframe.
-            $('#wiki-page-edit')
+            $actionForm
                 .attr('action', '?iframe=1')
                 .attr('target', 'save-and-edit-target');
             // Change the button to a loading state style
             $(this).addClass('loading');
+
+            // PROBLEM:  $('#wiki-page-edit')[0] is undefined
+
             return true;
         });
         $('#btn-save-and-edit').show();
@@ -966,15 +970,15 @@
                         // We also need to update the form's current_rev to
                         // avoid triggering a conflict, since we just saved in
                         // the background.
-                        $('#wiki-page-edit input[name=current_rev]').val(
+                        $actionForm.find('input[name=current_rev]').val(
                             ir.attr('data-current-revision'));
                         
-                    } else if ($('#wiki-page-edit', if_doc).hasClass('conflict')) {
+                    } else if ($('#' + $actionForm.get(0).id, if_doc).hasClass('conflict')) {
                         // HACK: If we detect a conflict in the iframe while
                         // doing save-and-edit, force a full-on save in order
                         // to surface the issue. There's no easy way to bust
                         // the iframe otherwise, since this was a POST.
-                        $('#wiki-page-edit')
+                        $actionForm
                             .attr('action', '')
                             .attr('target', '');
                         $('#btn-save').click();
@@ -988,7 +992,7 @@
             // Stop loading state on button
             $('#btn-save-and-edit').removeClass('loading');
             // Re-enable the form; it gets disabled to prevent double-POSTs
-            $('#wiki-page-edit')
+            $actionForm
                 .data('disabled', false)
                 .removeClass('disabled');
             return true;
