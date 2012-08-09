@@ -13,11 +13,11 @@
 .devderby .sub { padding-top: 265px; width: 315px; float: right; }
 
 /* @Branding *********/
-#devderby.landing { background: url("../img/devderby/bg-devderby.jpg") center 25px no-repeat; }
-#devderby { background: url("../img/devderby/bg-devderby-plain.jpg") center 25px no-repeat; min-width: 960px; }
+#devderby.landing #content { background: url("../img/devderby/bg-devderby.jpg") center 0 no-repeat; }
+#devderby #content { background: url("../img/devderby/bg-devderby-plain.jpg") center 0 no-repeat; min-width: 960px; }
 #devderby #content-main { padding-top: 0; }
 
-#devderby #page-head { padding: 0; margin: 10px 0 0; overflow: hidden; }
+#devderby #page-head { padding: 10px 0 0; overflow: hidden; }
 #page-head #nav-derby { width: 800px; float: right; text-align: right; }
 #page-head #nav-derby ul { margin: 1.5em 20px 0; }
 #page-head #nav-derby li { display: inline-block; margin: 0 10px; list-style: none; background: none; padding: 0; font: bold 1em/1 "Carto Bold", sans-serif; text-transform: uppercase; letter-spacing: 2px; }
