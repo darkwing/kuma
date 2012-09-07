@@ -1,3 +1,4 @@
+import logging
 import difflib
 import re
 import urllib
@@ -116,10 +117,18 @@ def tag_diff_table(prev_tags, curr_tags, prev_id, curr_id):
     html_diff = difflib.HtmlDiff(wrapcolumn=DIFF_WRAP_COLUMN)
     prev_tag_lines = [prev_tags]
     curr_tag_lines = [curr_tags]
+
+    logging.debug(prev_tag_lines)
+    logging.debug(curr_tag_lines)
+
     diff = html_diff.make_table(prev_tag_lines, curr_tag_lines,
                                 _("Revision %s") % prev_id,
                                 _("Revision %s") % curr_id
                                )
+
+    # Simple formatting update: 784877
+    diff = diff.replace('",', '"<br />').replace('<td', '<td valign="top"')
+
     return jinja2.Markup(diff)
 
 
