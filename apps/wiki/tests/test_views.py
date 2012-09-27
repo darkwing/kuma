@@ -6,6 +6,7 @@ import datetime
 import json
 import base64
 import time
+import logging
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -630,8 +631,13 @@ class DocumentEditingTests(TestCaseBase):
             doc = document(save=True, slug=slug, title=title,
                                        locale=settings.WIKI_DEFAULT_LANGUAGE)
             revision(save=True, document=doc)
-            response = client.get(reverse('wiki.document', args=[slug],
-                                    locale=settings.WIKI_DEFAULT_LANGUAGE))
+
+            url = reverse('wiki.document', args=[slug],
+                                    locale=settings.WIKI_DEFAULT_LANGUAGE)
+            response = client.get(url)
+            logging.debug(url + ': ' + str(response.status_code))
+            eq_(response.status_code, 200)
+
             page = pq(response.content)
             eq_(aught_title, page.find('title').text())
 
@@ -640,6 +646,14 @@ class DocumentEditingTests(TestCaseBase):
         _make_doc('Two', 'Two | One | MDN', 'one/two')
         _make_doc('Three', 'Three | One | MDN', 'one/two/three')
         _make_doc(u'Special Φ Char', u'Special Φ Char | One | MDN', 'one/two/special_char')
+        _make_doc('Ten', 'Ten | MDN', 'ten')
+        _make_doc('Eleven', 'Eleven | Ten | MDN', 'ten/eleven')
+        _make_doc('Twelve', 'Twelve | Ten | MDN', 'ten/eleven/twelve')
+
+        # Test caveat "en" root
+        _make_doc('En', 'En | MDN', 'en')
+        _make_doc('En Two', 'Two | MDN', 'en/twoz')  # XML Error, if I add Follow=True, goes to "Create Dog" page
+        _make_doc('En Three', 'Three | Two | MDN', 'en/twoz/threez')
 
 
     def test_seo_script(self):

@@ -230,11 +230,19 @@ def _format_attachment_obj(attachments):
 
 def _split_slug(slug):
     """Utility function to do basic slug splitting"""
+
     slug_split = slug.split('/')
     length = len(slug_split)
+
+    # Some documents have a 'en/....' root, so don't use en
     root = None
     if length > 1:
+        #if slug_split[0].lower() == 'en':
+        #    if length > 2:
+        #        root = slug_split[1]
+        #else:
         root = slug_split[0]
+
     specific = slug_split.pop()
 
     return {'specific': specific, 'parent': '/'.join(slug_split),
