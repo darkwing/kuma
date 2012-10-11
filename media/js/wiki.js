@@ -736,12 +736,12 @@
      * Initialize the article preview functionality.
      */
     function initArticlePreview() {
-        $("#btn-preview").click(function(e) {
+        $('#btn-preview').click(function(e) {
             e.preventDefault();
             
             // Ensure that content is available and exists
-            var title = " ", 
-                $titleNode = $("#id_title"),
+            var title = ' ', 
+                $titleNode = $('#id_title'),
                 data;
                 
             if(CKEDITOR.instances['id_content']) {
@@ -760,7 +760,7 @@
             // Since we have content, we can launch!
             if(data) {
                 // Create and inject form for preview submission
-                var $form = $("<form action='" + $(this).attr("data-preview-url") + "' target='_blank' method='POST' />").appendTo(document.body);
+                var $form = $("<form action='" + $(this).attr("data-preview-url") + "' target='previewWin' method='POST' />").appendTo(document.body);
                 $("<input type='hidden' name='content' />").val(data).appendTo($form);
                 $("<input type='hidden' name='title' />").val(title).appendTo($form);
                 
