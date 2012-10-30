@@ -162,8 +162,8 @@ def get(document, cache_control, base_url, timeout=None):
 
         elif resp.status_code == 200:
 
-            #logging.debug('KUMASCRIPT GET resp = ')
-            #logging.debug(resp)
+            logging.debug('KUMASCRIPT GET resp = ')
+            logging.debug(resp)
 
             resp_body = process_body(resp)
             resp_errors = process_errors(resp)
@@ -220,13 +220,15 @@ def process_body(response):
     # in vendor from 0.6.1 to at least 0.10.6, and use resp.text,
     # which does auto-detection. But, that will break things.
 
-    logging.debug('KUMASCRIPT PROCESS_BODY reponse:')
-    logging.debug(response)
+    #logging.debug('KUMASCRIPT PROCESS_BODY reponse:')
+    #logging.debug(response)
 
+    read = response.read()
     logging.debug('KUMASCRIPT PROCESS_BODY reponse.read():')
-    logging.debug(response.read())
+    logging.debug(read)
+    logging.debug(read.decode('utf8'))
 
-    resp_body = response.read().decode('utf8')
+    resp_body = read.decode('utf8')
 
     logging.debug('KUMASCRIPT PROCESS_BODY after decode:')
     logging.debug(resp_body)    
@@ -237,8 +239,8 @@ def process_body(response):
     from wiki.models import Document
     cleaned = Document.objects.clean_content(resp_body)
 
-    logging.debug('KUMASCRIPT PROCESS_BODY after cleaned:')
-    logging.debug(cleaned)    
+    #logging.debug('KUMASCRIPT PROCESS_BODY after cleaned:')
+    #logging.debug(cleaned)    
 
     return cleaned
 
