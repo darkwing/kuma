@@ -709,8 +709,8 @@ class Document(NotificationsMixin, ModelBase):
         if self.is_rendering_scheduled or self.is_rendering_in_progress:
             return False
 
-        logging.debug('SCHEDULE_RENDERING:  Initial is:')
-        logging.debug(self.html)
+        #logging.debug('SCHEDULE_RENDERING:  Initial is:')
+        #logging.debug(self.html)
 
         # Note when the rendering was scheduled. Kind of a hack, doing a quick
         # update and setting the local property rather than doing a save()

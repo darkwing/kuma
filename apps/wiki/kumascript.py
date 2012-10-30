@@ -89,7 +89,7 @@ def get(document, cache_control, base_url, timeout=None):
 
     resp_body, resp_errors = None, None
 
-    #logging.debug("KUMASCRIPT GET:  " + document.html)
+    logging.debug("KUMASCRIPT GET:  " + document.html)
 
     try:
         url_tmpl = settings.KUMASCRIPT_URL_TEMPLATE
@@ -99,8 +99,8 @@ def get(document, cache_control, base_url, timeout=None):
         ck_etag, ck_modified, ck_body, ck_errors = (
                 build_cache_keys(document_slug, document_locale))
 
-        #logging.debug("KUMASCRIPT GET ck_body: ")
-        #logging.debug(ck_body)
+        logging.debug("KUMASCRIPT GET ck_body: ")
+        logging.debug(ck_body)
 
         headers = {
             'X-FireLogger': '1.2',
@@ -152,7 +152,7 @@ def get(document, cache_control, base_url, timeout=None):
         with statsd.timer('wiki.ks_get'):
             resp = requests.get(url, headers=headers, timeout=timeout)
 
-        logging.debug("KUMASCRIPT GET status:  " + resp.status_code)
+        logging.debug("KUMASCRIPT GET status:  " + str(resp.status_code))
 
         if resp.status_code == 304:
             # Conditional GET was a pass, so use the cached content.
@@ -161,6 +161,10 @@ def get(document, cache_control, base_url, timeout=None):
             resp_errors = c_result.get(ck_errors, None)
 
         elif resp.status_code == 200:
+
+            #logging.debug('KUMASCRIPT GET resp = ')
+            #logging.debug(resp)
+
             resp_body = process_body(resp)
             resp_errors = process_errors(resp)
 
@@ -186,8 +190,8 @@ def get(document, cache_control, base_url, timeout=None):
                   "args": ["UnknownError"]}
             ]
 
-        #logging.debug("KUMASCRIPT GET resp_body:  ")
-        #logging.debug(resp_body)
+        logging.debug("KUMASCRIPT GET status:  ")
+        logging.debug(resp_body)
 
     except Exception, e:
         # Last resort: Something went really haywire. Kumascript server died
@@ -215,13 +219,28 @@ def process_body(response):
     # TODO: Better solution would be to upgrade the requests module
     # in vendor from 0.6.1 to at least 0.10.6, and use resp.text,
     # which does auto-detection. But, that will break things.
+
+    logging.debug('KUMASCRIPT PROCESS_BODY reponse:')
+    logging.debug(response)
+
+    logging.debug('KUMASCRIPT PROCESS_BODY reponse.read():')
+    logging.debug(response.read())
+
     resp_body = response.read().decode('utf8')
+
+    logging.debug('KUMASCRIPT PROCESS_BODY after decode:')
+    logging.debug(resp_body)    
 
     # We defer bleach sanitation of kumascript content all the way
     # through editing, source display, and raw output. But, we still
     # want sanitation, so it finally gets picked up here.
     from wiki.models import Document
-    return Document.objects.clean_content(resp_body)
+    cleaned = Document.objects.clean_content(resp_body)
+
+    logging.debug('KUMASCRIPT PROCESS_BODY after cleaned:')
+    logging.debug(cleaned)    
+
+    return cleaned
 
 
 def process_errors(response):
