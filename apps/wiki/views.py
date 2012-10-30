@@ -410,9 +410,14 @@ def document(request, document_slug, document_locale):
 
     render_raw_fallback = False
 
+    logging.debug('html is: ')
+    logging.debug(doc.html)
+
     # Grab the document HTML as a fallback, then attempt to use kumascript:
     doc_html, ks_errors = doc.html, None
     if kumascript.should_use_rendered(doc, request.GET):
+
+        logging.debug("should_use_rendered!  " + doc.html)
 
         # A logged-in user can schedule a full re-render with Shift-Reload
         cache_control = None
@@ -424,6 +429,10 @@ def document(request, document_slug, document_locale):
 
         try:
             r_body, r_errors = doc.get_rendered(cache_control, base_url)
+
+            logging.debug("r_body retrieved")
+            logging.debug(r_body)
+
             if r_body:
                 doc_html = r_body
             if r_errors:
@@ -432,6 +441,7 @@ def document(request, document_slug, document_locale):
             # There was no rendered content available, and we were unable to
             # render it on the spot. So, fall back to presenting raw content
             render_raw_fallback = True
+            logging.debug('ERROR!')
 
     toc_html = None
     if not doc.is_template:
@@ -1256,6 +1266,10 @@ def translate(request, document_slug, document_locale, revision_id=None):
         rev_form = RevisionForm(instance=instance, initial=initial)
 
     if request.method == 'POST':
+
+        logging.debug('POST POST!')
+        logging.debug('-----------------------')
+
         which_form = request.POST.get('form', 'both')
         doc_form_invalid = False
 

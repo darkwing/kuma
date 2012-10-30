@@ -615,6 +615,7 @@ class Document(NotificationsMixin, ModelBase):
     def is_rendering_scheduled(self):
         """Does this have a rendering scheduled?"""
         if not self.render_scheduled_at:
+            logging.debug("IS_RENDERING_SCHEDULED: FALSE")
             return False
 
         # Check whether a scheduled rendering has waited for too long.  Assume
@@ -623,9 +624,11 @@ class Document(NotificationsMixin, ModelBase):
         max_duration = timedelta(seconds=timeout)
         duration = datetime.now() - self.render_scheduled_at
         if (duration > max_duration):
+            logging.debug("IS_RENDERING_SCHEDULED: FALSE")
             return False
 
         if not self.last_rendered_at:
+            logging.debug("IS_RENDERING_SCHEDULED: TRUE")
             return True
         return self.render_scheduled_at > self.last_rendered_at
 
@@ -634,6 +637,7 @@ class Document(NotificationsMixin, ModelBase):
         """Does this have a rendering in progress?"""
         if not self.render_started_at:
             # No start time, so False.
+            logging.debug("IS_RENDERING_IN_PROGRESS: FALSE")
             return False
 
         # Check whether an in-progress rendering has gone on for too long.
@@ -642,25 +646,36 @@ class Document(NotificationsMixin, ModelBase):
         max_duration = timedelta(seconds=timeout)
         duration = datetime.now() - self.render_started_at
         if (duration > max_duration):
+            logging.debug("IS_RENDERING_IN_PROGRESS: FALSE")
             return False
 
         if not self.last_rendered_at:
             # No rendering ever, so in progress.
+            logging.debug("IS_RENDERING_IN_PROGRESS: TRUE")
             return True
 
         # Finally, if the render start is more recent than last completed
         # render, then we have one in progress.
+        logging.debug("IS_RENDERING_IN_PROGRESS: " + str(self.render_started_at > self.last_rendered_at))
         return self.render_started_at > self.last_rendered_at
 
     def get_rendered(self, cache_control=None, base_url=None):
         """Attempt to get rendered content for this document"""
+
+        logging.debug('GET_RENDERED')
+
         # No rendered content yet, so schedule the first render.
         if not self.rendered_html:
+            logging.debug('DIDNT FIND self.rendered_html')
+
             try:
                 self.schedule_rendering(cache_control, base_url)
             except DocumentRenderingInProgress:
                 # Unable to trigger a rendering right now, so we bail.
                 raise DocumentRenderedContentNotAvailable()
+        else:
+            logging.debug('FOUND self.rendered_html')
+            logging.debug(self.rendered_html)
 
         # If we have a cache_control directive, try scheduling a render.
         if cache_control:
@@ -694,6 +709,9 @@ class Document(NotificationsMixin, ModelBase):
         if self.is_rendering_scheduled or self.is_rendering_in_progress:
             return False
 
+        logging.debug('SCHEDULE_RENDERING:  Initial is:')
+        logging.debug(self.html)
+
         # Note when the rendering was scheduled. Kind of a hack, doing a quick
         # update and setting the local property rather than doing a save()
         now = datetime.now()
@@ -701,6 +719,8 @@ class Document(NotificationsMixin, ModelBase):
         self.render_scheduled_at = now
 
         if not self.defer_rendering:
+            logging.debug('SCHEDULE_RENDERING:  Attempting an immediate rendering')
+
             # Attempt an immediate rendering.
             self.render(cache_control, base_url)
         else:
@@ -721,13 +741,23 @@ class Document(NotificationsMixin, ModelBase):
         Document.objects.filter(pk=self.pk).update(render_started_at=now)
         self.render_started_at = now
 
+        logging.debug('RENDER, self.html is:')
+        logging.debug(self.html)
+
         # Perform rendering and update document
         if not constance.config.KUMASCRIPT_TIMEOUT:
             # A timeout of 0 should shortcircuit kumascript usage.
             self.rendered_html, self.rendered_errors = self.html, []
         else:
+
+            logging.debug('RENDER, going to kumascript it')
+
             self.rendered_html, errors = kumascript.get(self, cache_control,
                                                         base_url, timeout=timeout)
+
+            logging.debug('RENDER, *after* kumascripted:')
+            logging.debug(self.rendered_html)
+
             self.rendered_errors = errors and json.dumps(errors) or None
 
         # Finally, note the end time of rendering and update the document.

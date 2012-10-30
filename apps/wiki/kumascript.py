@@ -89,6 +89,8 @@ def get(document, cache_control, base_url, timeout=None):
 
     resp_body, resp_errors = None, None
 
+    #logging.debug("KUMASCRIPT GET:  " + document.html)
+
     try:
         url_tmpl = settings.KUMASCRIPT_URL_TEMPLATE
         url = unicode(url_tmpl).format(path=u'%s/%s' %
@@ -96,6 +98,9 @@ def get(document, cache_control, base_url, timeout=None):
 
         ck_etag, ck_modified, ck_body, ck_errors = (
                 build_cache_keys(document_slug, document_locale))
+
+        #logging.debug("KUMASCRIPT GET ck_body: ")
+        #logging.debug(ck_body)
 
         headers = {
             'X-FireLogger': '1.2',
@@ -147,6 +152,8 @@ def get(document, cache_control, base_url, timeout=None):
         with statsd.timer('wiki.ks_get'):
             resp = requests.get(url, headers=headers, timeout=timeout)
 
+        logging.debug("KUMASCRIPT GET status:  " + resp.status_code)
+
         if resp.status_code == 304:
             # Conditional GET was a pass, so use the cached content.
             c_result = cache.get_many([ck_body, ck_errors])
@@ -178,6 +185,9 @@ def get(document, cache_control, base_url, timeout=None):
                              % resp.status_code,
                   "args": ["UnknownError"]}
             ]
+
+        #logging.debug("KUMASCRIPT GET resp_body:  ")
+        #logging.debug(resp_body)
 
     except Exception, e:
         # Last resort: Something went really haywire. Kumascript server died
