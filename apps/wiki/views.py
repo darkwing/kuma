@@ -1219,6 +1219,7 @@ def autosuggest_documents(request):
         doc_info = {
             'title': d.title + ' [' + d.locale + ']',
             'label': d.title,
+            'slug': d.slug,
             'href':  d.get_absolute_url(),
             'id': d.id 
         }
