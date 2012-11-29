@@ -491,10 +491,10 @@ CKEDITOR.dialog.add( 'link', function( editor )
 												return req;
 											},
 											open: function() {
-												jQuery(window).bind("scroll", openCancelScroll);
+												jQuery(window).bind('scroll', openCancelScroll);
 											},
 											close: function() {
-												jQuery(window).unbind("scroll", openCancelScroll);	
+												jQuery(window).unbind('scroll', openCancelScroll);	
 											}
 										});
 									}
@@ -1270,7 +1270,7 @@ CKEDITOR.dialog.add( 'link', function( editor )
 		onFocus : function()
 		{
 			var selection = editor.getSelection(),
-				selectedText = selection.getSelectedText(),
+				selectedText = selection.getSelectedText().replace('()', ''),
 				selectedElement = selection.getSelectedElement(),
 				$autoComplete = jQuery(autoCompleteTextbox);
 				
