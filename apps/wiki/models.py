@@ -434,7 +434,7 @@ class DocumentManager(ManagerBase):
             # fields from Document and Revision models and knocking out what we
             # don't want? Serializer doesn't support exclusion list directly.
             'title', 'locale', 'slug', 'tags', 'is_template', 'is_localizable',
-            'parent', 'parent_topic', 'category', 'document',
+            'is_redirect', 'parent', 'parent_topic', 'category', 'document',
             'summary', 'content', 'comment',
             'keywords', 'tags', 'show_toc', 'significance', 'is_approved',
             'creator',  # HACK: Replaced on import, but deserialize needs it
@@ -543,6 +543,10 @@ class Document(NotificationsMixin, ModelBase):
     # Is this document a template or not?
     is_template = models.BooleanField(default=False, editable=False,
                                       db_index=True)
+    # Is this document a redirect or not?
+    is_redirect = models.BooleanField(default=False, editable=False,
+                                      db_index=True)
+
     # Is this document localizable or not?
     is_localizable = models.BooleanField(default=True, db_index=True)
 

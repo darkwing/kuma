@@ -48,6 +48,28 @@ class Migration(SchemaMigration):
             'rendered_html': ('django.db.models.fields.TextField', [], {'null': 'True', 'blank': 'True'}),
             'slug': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'}),
             'title': ('django.db.models.fields.CharField', [], {'max_length': '255', 'db_index': 'True'})
+        },
+        'wiki.revision': {
+            'Meta': {'object_name': 'Revision'},
+            'based_on': ('django.db.models.fields.related.ForeignKey', [], {'to': "orm['wiki.Revision']", 'null': 'True', 'blank': 'True'}),
+            'comment': ('django.db.models.fields.CharField', [], {'max_length': '255'}),
+            'content': ('django.db.models.fields.TextField', [], {}),
+            'created': ('django.db.models.fields.DateTimeField', [], {'default': 'datetime.datetime.now', 'db_index': 'True'}),
+            'creator': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'created_revisions'", 'to': "orm['auth.User']"}),
+            'document': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'revisions'", 'to': "orm['wiki.Document']"}),
+            'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
+            'is_approved': ('django.db.models.fields.BooleanField', [], {'default': 'True', 'db_index': 'True'}),
+            'is_mindtouch_migration': ('django.db.models.fields.BooleanField', [], {'default': 'False', 'db_index': 'True'}),
+            'keywords': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'mindtouch_old_id': ('django.db.models.fields.IntegerField', [], {'unique': 'True', 'null': 'True', 'db_index': 'True'}),
+            'reviewed': ('django.db.models.fields.DateTimeField', [], {'null': 'True'}),
+            'reviewer': ('django.db.models.fields.related.ForeignKey', [], {'related_name': "'reviewed_revisions'", 'null': 'True', 'to': "orm['auth.User']"}),
+            'show_toc': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'significance': ('django.db.models.fields.IntegerField', [], {'null': 'True'}),
+            'slug': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'db_index': 'True'}),
+            'summary': ('django.db.models.fields.TextField', [], {}),
+            'tags': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
+            'title': ('django.db.models.fields.CharField', [], {'max_length': '255', 'null': 'True', 'db_index': 'True'})
         }
     }
 
