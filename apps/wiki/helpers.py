@@ -80,6 +80,14 @@ def _massage_diff_content(content):
 
 
 @register.function
+def bugize_text(content):
+    content = content.replace('<', '&lt;').replace('>', '&gt;')
+    return re.sub(r'bug #?.([0-9]+)', 
+                  r'<a href="https://bugzilla.mozilla.org/show_bug.cgi?id=\1">\1</a>', 
+                  content)
+
+
+@register.function
 def diff_table(content_from, content_to, prev_id, curr_id):
     """Creates an HTML diff of the passed in content_from and content_to."""
     tidy_from, errors = _massage_diff_content(content_from)

@@ -23,6 +23,7 @@ from wiki.events import (ApproveRevisionInLocaleEvent,
                          ReviewableRevisionInLocaleEvent)
 from wiki.models import Document, Revision
 from wiki.views import SHOWFOR_DATA
+from wiki.helpers import bugize_text
 
 from datetime import datetime
 
@@ -171,7 +172,7 @@ def revisions(request):
             prev = rev.get_previous()
             fromRev = str(prev.id if prev else rev.id)
             doc_url = reverse('wiki.document', args=[rev.document.full_path], locale=rev.document.locale)
-            comment = rev.comment if rev.comment else ""
+            comment = bugize_text(rev.comment if rev.comment else "")
 
             revision_json['aaData'].append({
                 'id': rev.id,
