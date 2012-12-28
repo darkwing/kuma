@@ -1,1 +1,38 @@
-{{ diff_table(revision_from.content, revision_to.content, revision_from.id, revision_to.id) }}
+<div class="rev-def-wrapper">
+	<input type="checkbox" />
+	<div class="rev-def-rendered">
+		<section class="boxed">
+			<article class="article" role="main">
+				<h1>
+					{% if revision_from.title != revision_to.title %}
+						<span class="changed">{{ revision_to.title }}</span>
+					{% else %}
+						{{ revision_to.title }}
+					{% endif %}
+				</h1>
+				{% if revision_from.content != revision_to.content %}
+					( content changes here)
+				{% else %}
+					<p>{{ _('There were no content changes for this revision.') }}</p>
+				{% endif %}
+			</article>
+		</section>
+	</div>
+	<div class="rev-def-html">
+		{{ diff_table(revision_from.content, revision_to.content, revision_from.id, revision_to.id) }}
+	</div>
+</div>
+
+<style type="text/css">
+	.rev-def-wrapper input {
+		float: right;
+	}
+
+	.rev-def-rendered {
+		clear: both;
+	}
+
+	.rev-def-wrapper .changed {
+		background: lightgreen;
+	}
+</style>

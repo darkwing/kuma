@@ -181,6 +181,9 @@ $(document).ready(function(){
     $actionBar.show();
     $diffView.html(gettext('Loading ...'));
     $diffView.load(data.compare_url, function(resp, status, xhr){
+
+      console.log(data.compare_url, resp)
+
       if (status == 'error') {
         $diffView.html('Error: ' + xhr.status + ' ' + xhr.statusText);
       } else {
