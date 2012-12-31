@@ -1,6 +1,6 @@
 <div class="rev-def-wrapper">
-	<input type="checkbox" />
-	<div class="rev-def-rendered">
+	<input type="checkbox" onchange="swapPane(this.checked);" />
+	<div class="rev-def-rendered rev-def-show">
 		<section class="boxed">
 			<article class="article" role="main">
 				<h1>
@@ -13,7 +13,7 @@
 				{% if revision_from.content != revision_to.content %}
 					( content changes here)
 				{% else %}
-					<p>{{ _('There were no content changes for this revision.') }}</p>
+					<p><em>({{ _('There were no content changes for this revision.') }})</em></p>
 				{% endif %}
 			</article>
 		</section>
@@ -27,6 +27,9 @@
 	.rev-def-wrapper input {
 		float: right;
 	}
+	.rev-def-wrapper > div {
+		display: none;
+	}
 
 	.rev-def-rendered {
 		clear: both;
@@ -35,4 +38,16 @@
 	.rev-def-wrapper .changed {
 		background: lightgreen;
 	}
+
+	.rev-def-wrapper > div.rev-def-show {
+		display: block;
+	}
 </style>
+<script stype="text/javascript">
+function swapPane(checked) {
+	var $divs = $('.rev-def-wrapper > div'),
+		showClass = 'rev-def-show';
+	$divs.removeClass(showClass);
+	$($divs.get(checked ? 1 : 0)).addClass(showClass);
+}
+</script>
