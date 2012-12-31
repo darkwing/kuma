@@ -11,7 +11,7 @@
 					{% endif %}
 				</h1>
 				{% if revision_from.content != revision_to.content %}
-					( content changes here)
+					{{ inline | safe }}
 				{% else %}
 					<p><em>({{ _('There were no content changes for this revision.') }})</em></p>
 				{% endif %}
@@ -19,7 +19,7 @@
 		</section>
 	</div>
 	<div class="rev-def-html">
-		{{ diff_table(revision_from.content, revision_to.content, revision_from.id, revision_to.id) }}
+		{{ table }}
 	</div>
 </div>
 
@@ -35,8 +35,11 @@
 		clear: both;
 	}
 
-	.rev-def-wrapper .changed {
+	.rev-def-rendered ins {
 		background: lightgreen;
+	}
+	.rev-def-rendered del {
+		background: pink;
 	}
 
 	.rev-def-wrapper > div.rev-def-show {

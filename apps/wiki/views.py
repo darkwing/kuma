@@ -77,6 +77,7 @@ from wiki.models import (Document, Revision, HelpfulVote, EditorToolbar,
                          DOCUMENT_LAST_MODIFIED_CACHE_KEY_TMPL,
                          get_current_or_latest_revision)
 from wiki.tasks import send_reviewed_notification, schedule_rebuild_kb
+from wiki.helpers import (diff_table, diff_inline)
 import wiki.content
 from wiki import kumascript
 
@@ -1422,8 +1423,13 @@ def compare_revisions(request, document_slug, document_locale):
     revision_from = get_object_or_404(Revision, id=from_id)
     revision_to = get_object_or_404(Revision, id=to_id)
 
+    # Create the diff table
+    table = diff_table(revision_from.content, revision_to.content, revision_from.id, revision_to.id)
+    inline = diff_inline(revision_from.content, revision_to.content)
+
     context = {'document': doc, 'revision_from': revision_from,
-                         'revision_to': revision_to}
+                         'revision_to': revision_to, 'table': table,
+                         'inline': inline}
     if request.GET.get('raw', 0):
         response = jingo.render(request, 'wiki/includes/revision_diff_table.html',
                                 context)
