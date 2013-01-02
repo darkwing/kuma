@@ -20,6 +20,14 @@ def compare_url(doc, from_id, to_id):
            )
 
 
+def show_inline_diff(content_from, content_to):
+    tidy_from, errors = _massage_diff_content(content_from)
+    tidy_to, errors = _massage_diff_content(content_to)
+    sm = difflib.SequenceMatcher(None, tidy_from, tidy_to)
+    
+    
+
+
 # http://stackoverflow.com/q/774316/571420
 def show_diff(seqm):
     """Unify operations between two compared strings

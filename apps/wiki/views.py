@@ -1427,9 +1427,26 @@ def compare_revisions(request, document_slug, document_locale):
     table = diff_table(revision_from.content, revision_to.content, revision_from.id, revision_to.id)
     inline = diff_inline(revision_from.content, revision_to.content)
 
+    # Create the rendered diff
+    rendered_diff = ''
+    if revision_from.content != revision_to.content:
+        py_table = pq(table)
+        py_table_rows = py_table.find('tbody tr')
+        rendered_lefts = rendered_rights = ''
+        for row in py_table_rows:
+            row_left = pq(pq(row).find('td').eq(2)).html() or ''
+            row_right = pq(pq(row).find('td').eq(5)).html() or ''
+            rendered_lefts += row_left
+            rendered_rights += row_right
+            
+        if rendered_lefts or rendered_rights:
+            rendered_diff = '<table border="1"><tr><td>%s</td><td>%s</td></tr></table>' % (rendered_lefts, rendered_rights)
+            rendered_diff = rendered_diff.replace('&nbsp;', ' ').replace('&gt;', '>').replace('&lt;', '<')
+            logging.debug(rendered_diff)
+            
     context = {'document': doc, 'revision_from': revision_from,
                          'revision_to': revision_to, 'table': table,
-                         'inline': inline}
+                         'inline': inline, 'rendered_diff': rendered_diff}
     if request.GET.get('raw', 0):
         response = jingo.render(request, 'wiki/includes/revision_diff_table.html',
                                 context)

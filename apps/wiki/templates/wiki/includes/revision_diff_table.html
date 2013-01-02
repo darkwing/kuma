@@ -13,8 +13,8 @@
 						{{ revision_to.title }}
 					{% endif %}
 				</h1>
-				{% if revision_from.content != revision_to.content %}
-					{{ inline | safe }}
+				{% if rendered_diff %}
+					{{ rendered_diff | safe }}
 				{% else %}
 					<p><em>({{ _('There were no content changes for this revision.') }})</em></p>
 				{% endif %}
