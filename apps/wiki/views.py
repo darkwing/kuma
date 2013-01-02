@@ -77,7 +77,7 @@ from wiki.models import (Document, Revision, HelpfulVote, EditorToolbar,
                          DOCUMENT_LAST_MODIFIED_CACHE_KEY_TMPL,
                          get_current_or_latest_revision)
 from wiki.tasks import send_reviewed_notification, schedule_rebuild_kb
-from wiki.helpers import (diff_table, diff_inline)
+from wiki.helpers import (diff_table, diff_inline, diff_rendered)
 import wiki.content
 from wiki import kumascript
 
@@ -1428,21 +1428,7 @@ def compare_revisions(request, document_slug, document_locale):
     inline = diff_inline(revision_from.content, revision_to.content)
 
     # Create the rendered diff
-    rendered_diff = ''
-    if revision_from.content != revision_to.content:
-        py_table = pq(table)
-        py_table_rows = py_table.find('tbody tr')
-        rendered_lefts = rendered_rights = ''
-        for row in py_table_rows:
-            row_left = pq(pq(row).find('td').eq(2)).html() or ''
-            row_right = pq(pq(row).find('td').eq(5)).html() or ''
-            rendered_lefts += row_left
-            rendered_rights += row_right
-            
-        if rendered_lefts or rendered_rights:
-            rendered_diff = '<table border="1"><tr><td>%s</td><td>%s</td></tr></table>' % (rendered_lefts, rendered_rights)
-            rendered_diff = rendered_diff.replace('&nbsp;', ' ').replace('&gt;', '>').replace('&lt;', '<')
-            logging.debug(rendered_diff)
+    rendered_diff = diff_rendered(revision_from.content, revision_to.content)
             
     context = {'document': doc, 'revision_from': revision_from,
                          'revision_to': revision_to, 'table': table,

@@ -25,7 +25,33 @@ def show_inline_diff(content_from, content_to):
     tidy_to, errors = _massage_diff_content(content_to)
     sm = difflib.SequenceMatcher(None, tidy_from, tidy_to)
     
-    
+
+def diff_rendered(content_from, content_to):
+    """ blah """
+    if content_from == content_to:
+        return ''
+
+    tidy_from, errors = _massage_diff_content(content_from)
+    tidy_to, errors = _massage_diff_content(content_to)
+
+    from_lines = tidy_from.splitlines()
+    to_lines = tidy_to.splitlines()
+
+    seqm = difflib.SequenceMatcher(None, tidy_from, tidy_to)
+    full_output = []
+    for opcode, a0, a1, b0, b1 in seqm.get_opcodes():
+        if opcode == 'equal':
+            full_output.append(seqm.a[a0:a1])
+        elif opcode == 'insert':
+            full_output.append("<ins>" + seqm.b[b0:b1] + "</ins>")
+        elif opcode == 'delete':
+            full_output.append("<del>" + seqm.a[a0:a1] + "</del>")
+        elif opcode == 'replace':
+            full_output.append("<del>" + seqm.a[a0:a1] + "</del>")
+            full_output.append("<ins>" + seqm.b[b0:b1] + "</ins>")
+        else:
+            raise RuntimeError("unexpected opcode")
+    return ''.join(full_output)
 
 
 # http://stackoverflow.com/q/774316/571420
