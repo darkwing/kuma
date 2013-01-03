@@ -12,6 +12,7 @@ from sumo.urlresolvers import reverse
 from wiki import DIFF_WRAP_COLUMN
 
 import logging
+from pyquery import PyQuery as pq
 
 
 def compare_url(doc, from_id, to_id):
@@ -43,40 +44,80 @@ def diff_rendered(content_from, content_to):
 
     seqm = difflib.SequenceMatcher(None, tidy_from, tidy_to)
     full_output = []
-    """
+    used_elements = []
+
+    def apply_tag(seq_string, start, end, tag):
+        #  Walk backward in the sequence to find a '<' or a '>'
+        #  If a '<' is found before a '>', assume it's an in-tag change
+        #       and move the tag before and after it
+        #  If a '>' is found first, carry on per usual
+        last_angle = ''
+        start_down = start
+
+        was = '<%s>%s</%s>' % (tag, seq_string[start:end], tag)
+        logging.debug('Change without processing: ' + was)
+
+        while start_down > 0:
+            #logging.debug(str(start_down) + ' / ' + seq_string[start_down])
+            if seq_string[start_down] == '>':
+                last_angle = '>'
+                break
+            elif seq_string[start_down] == '<':
+                last_angle = '<'
+                break
+            else:
+                start_down = start_down - 1
+
+        return_val = ''
+
+        if last_angle != '>':  # attribute change
+
+            #  Detect the tag type
+            tag_type = seq_string[start_down+1:end].partition(' ')[0]
+
+            #  Replace the "end" position with the end of the "</tag_type"
+            end_split = seq_string[start_down+1:len(seq_string)].split('</' + tag_type)
+            if len(end_split):
+                end = start_down + 1 + len(end_split[0]) + 2 + len(tag_type) + 1
+
+            if end in used_elements:
+                logging.debug('already used this element, not showing duplicate changes')
+                return ''
+            used_elements.append(end)
+
+            string = seq_string[start_down-1:end]
+            logging.debug('in-tag/attribute change')
+        else:
+            string = seq_string[start:end]
+            logging.debug('simple change!')
+
+        return_val = '<%s>%s</%s>' % (tag, string, tag) if len(string.strip()) else ''
+        return_val = ' ' + return_val + ' '
+        logging.debug('change with processing: ' + return_val)
+
+        return return_val
+
     for opcode, a0, a1, b0, b1 in seqm.get_opcodes():
         if opcode == 'equal':
             full_output.append(seqm.a[a0:a1])
         elif opcode == 'insert':
-            full_output.append('<ins>' + seqm.b[b0:b1] + '</ins>')
+            #full_output.append('<ins>' + seqm.b[b0:b1] + '</ins>')
+            full_output.append(apply_tag(seqm.b, b0, b1, 'ins'))
         elif opcode == 'delete':
-            full_output.append('<del>' + seqm.a[a0:a1] + '</del>')
+            #full_output.append('<del>' + seqm.a[a0:a1] + '</del>')
+            full_output.append(apply_tag(seqm.a, a0, a1, 'del'))
         elif opcode == 'replace':
-            logging.debug(str(a0) + '/' + str(a1) + '/' + str(b0) + str(b1))
-            full_output.append('<del>' + seqm.a[a0:a1] + '</del>')
-            full_output.append('<ins>' + seqm.b[b0:b1] + '</ins>')
-        else:
-            raise RuntimeError('unexpected opcode')
-    """
-
-    def is_in_tag(seq, start):
-        return True
-
-    for opcode, a0, a1, b0, b1 in seqm.get_opcodes():
-        if opcode == 'equal':
-            full_output.append(seqm.a[a0:a1])
-        elif opcode == 'insert':
-            full_output.append('(((ins)))' + seqm.b[b0:b1] + '(((/ins)))')
-        elif opcode == 'delete':
-            full_output.append('(((del)))' + seqm.a[a0:a1] + '(((/del)))')
-        elif opcode == 'replace':
-            logging.debug(str(a0) + '/' + str(a1) + '/' + str(b0) + str(b1))
-            full_output.append('(((del)))' + seqm.a[a0:a1] + '(((/del)))')
-            full_output.append('(((ins)))' + seqm.b[b0:b1] + '(((/ins)))')
+            #full_output.append('<del>' + seqm.a[a0:a1] + '</del>')
+            #full_output.append('<ins>' + seqm.b[b0:b1] + '</ins>')
+            full_output.append(apply_tag(seqm.a, a0, a1, 'del'))
+            full_output.append(apply_tag(seqm.b, b0, b1, 'ins'))
         else:
             raise RuntimeError('unexpected opcode')
 
-    return ''.join(full_output)
+    full_output = ''.join(full_output)
+    full_output = pq(full_output).find('body').html()
+
+    return full_output
 
 
 # http://stackoverflow.com/q/774316/571420
