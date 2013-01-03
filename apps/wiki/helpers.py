@@ -11,6 +11,8 @@ from tower import ugettext as _
 from sumo.urlresolvers import reverse
 from wiki import DIFF_WRAP_COLUMN
 
+import logging
+
 
 def compare_url(doc, from_id, to_id):
     return (reverse('wiki.compare_revisions', args=[doc.full_path],
@@ -37,20 +39,43 @@ def diff_rendered(content_from, content_to):
     from_lines = tidy_from.splitlines()
     to_lines = tidy_to.splitlines()
 
+    logging.debug(tidy_to)
+
     seqm = difflib.SequenceMatcher(None, tidy_from, tidy_to)
     full_output = []
+    """
     for opcode, a0, a1, b0, b1 in seqm.get_opcodes():
         if opcode == 'equal':
             full_output.append(seqm.a[a0:a1])
         elif opcode == 'insert':
-            full_output.append("<ins>" + seqm.b[b0:b1] + "</ins>")
+            full_output.append('<ins>' + seqm.b[b0:b1] + '</ins>')
         elif opcode == 'delete':
-            full_output.append("<del>" + seqm.a[a0:a1] + "</del>")
+            full_output.append('<del>' + seqm.a[a0:a1] + '</del>')
         elif opcode == 'replace':
-            full_output.append("<del>" + seqm.a[a0:a1] + "</del>")
-            full_output.append("<ins>" + seqm.b[b0:b1] + "</ins>")
+            logging.debug(str(a0) + '/' + str(a1) + '/' + str(b0) + str(b1))
+            full_output.append('<del>' + seqm.a[a0:a1] + '</del>')
+            full_output.append('<ins>' + seqm.b[b0:b1] + '</ins>')
         else:
-            raise RuntimeError("unexpected opcode")
+            raise RuntimeError('unexpected opcode')
+    """
+
+    def is_in_tag(seq, start):
+        return True
+
+    for opcode, a0, a1, b0, b1 in seqm.get_opcodes():
+        if opcode == 'equal':
+            full_output.append(seqm.a[a0:a1])
+        elif opcode == 'insert':
+            full_output.append('(((ins)))' + seqm.b[b0:b1] + '(((/ins)))')
+        elif opcode == 'delete':
+            full_output.append('(((del)))' + seqm.a[a0:a1] + '(((/del)))')
+        elif opcode == 'replace':
+            logging.debug(str(a0) + '/' + str(a1) + '/' + str(b0) + str(b1))
+            full_output.append('(((del)))' + seqm.a[a0:a1] + '(((/del)))')
+            full_output.append('(((ins)))' + seqm.b[b0:b1] + '(((/ins)))')
+        else:
+            raise RuntimeError('unexpected opcode')
+
     return ''.join(full_output)
 
 
@@ -64,14 +89,14 @@ seqm is a difflib.SequenceMatcher instance whose a & b are strings"""
         if opcode == 'equal':
             full_output.append(seqm.a[a0:a1])
         elif opcode == 'insert':
-            full_output.append("<ins>" + seqm.b[b0:b1] + "</ins>")
+            full_output.append('<ins>' + seqm.b[b0:b1] + '</ins>')
         elif opcode == 'delete':
-            full_output.append("<del>" + seqm.a[a0:a1] + "</del>")
+            full_output.append('<del>' + seqm.a[a0:a1] + '</del>')
         elif opcode == 'replace':
-            full_output.append("&nbsp;<del>" + seqm.a[a0:a1] + "</del>&nbsp;")
-            full_output.append("&nbsp;<ins>" + seqm.b[b0:b1] + "</ins>&nbsp;")
+            full_output.append('&nbsp;<del>' + seqm.a[a0:a1] + '</del>&nbsp;')
+            full_output.append('&nbsp;<ins>' + seqm.b[b0:b1] + '</ins>&nbsp;')
         else:
-            raise RuntimeError("unexpected opcode")
+            raise RuntimeError('unexpected opcode')
     output = []
     whitespace_change = False
     for piece in full_output:
