@@ -44,6 +44,8 @@ def diff_rendered(content_from, content_to):
     full_output = []
     used_elements = []
 
+    logging.debug('======================================')
+
     def apply_tag(seq_string, start, end, tag, opcode):
         #  Walk backward in the sequence to find a '<' or a '>'
         #  If a '<' is found before a '>', assume it's an in-tag change
@@ -55,7 +57,7 @@ def diff_rendered(content_from, content_to):
         logging.debug('-------------------------------------------------')
 
         was = '<%s>%s</%s>' % (tag, seq_string[start:end], tag)
-        logging.debug('<' + opcode + '> Change without processing: ' + was)
+        #logging.debug('<' + opcode + '> Change without processing: ' + was)
 
         while start_down > 0:
             #logging.debug(str(start_down) + ' / ' + seq_string[start_down])
@@ -68,13 +70,13 @@ def diff_rendered(content_from, content_to):
             else:
                 start_down = start_down - 1
 
-        return_val = ''
+        return_val = string = ''
 
-        string = ''
-        if last_angle != '>':  # attribute change
+        logging.debug('last_angle is: [' + last_angle + ']')
+        if last_angle and last_angle != '>':  # attribute change
             
             #  Detect the tag type
-            tag_type = seq_string[start_down+1:end].partition(' ')[0]
+            tag_type = seq_string[start_down+1:end].partition(' ')[0].replace('>', '').replace('<','')
 
             if tag_type != '/':
                 #  Replace the "end" position with the end of the "</tag_type"
@@ -91,16 +93,16 @@ def diff_rendered(content_from, content_to):
                     return ''
                 used_elements.append(end)
 
-                string = seq_string[start_down-1:end]
-                logging.debug('in-tag/attribute change')
-            
+                logging.debug
+
+                string = seq_string[start_down:end]
+                logging.debug('in-tag/attribute change :: ' + string)
         else:
             string = seq_string[start:end]
-            logging.debug('simple change!')
+            #logging.debug('simple change!')
 
         return_val = '<%s>%s</%s>' % (tag, string, tag) if len(string.strip()) else ''
-        return_val = ' ' + return_val + ' '
-        logging.debug('change with processing: ' + return_val)
+        #logging.debug('change with processing: ' + return_val)
 
         return return_val
 
@@ -108,16 +110,16 @@ def diff_rendered(content_from, content_to):
         if opcode == 'equal':
             full_output.append(seqm.a[a0:a1])
         elif opcode == 'insert':
-            full_output.append('<ins>' + seqm.b[b0:b1] + '</ins>')
-            #full_output.append(apply_tag(seqm.b, b0, b1, 'ins', opcode))
+            #full_output.append('<ins>' + seqm.b[b0:b1] + '</ins>')
+            full_output.append(apply_tag(seqm.b, b0, b1, 'ins', opcode))
         elif opcode == 'delete':
-            full_output.append('<del>' + seqm.a[a0:a1] + '</del>')
-            #full_output.append(apply_tag(seqm.a, a0, a1, 'del', opcode))
+            #full_output.append('<del>' + seqm.a[a0:a1] + '</del>')
+            full_output.append(apply_tag(seqm.a, a0, a1, 'del', opcode))
         elif opcode == 'replace':
-            full_output.append('<del>' + seqm.a[a0:a1] + '</del>')
-            full_output.append('<ins>' + seqm.b[b0:b1] + '</ins>')
-            #full_output.append(apply_tag(seqm.a, a0, a1, 'del', opcode))
-            #full_output.append(apply_tag(seqm.b, b0, b1, 'ins', opcode))
+            #full_output.append('<del>' + seqm.a[a0:a1] + '</del>')
+            #full_output.append('<ins>' + seqm.b[b0:b1] + '</ins>')
+            full_output.append(apply_tag(seqm.a, a0, a1, 'del', opcode))
+            full_output.append(apply_tag(seqm.b, b0, b1, 'ins', opcode))
         else:
             raise RuntimeError('unexpected opcode')
 
