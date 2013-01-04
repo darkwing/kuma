@@ -88,27 +88,26 @@ def diff_rendered(content_from, content_to):
                 if len(end_split):
                     end = start_down + 1 + len(end_split[0]) + 2 + len(tag_type) + 1
 
-                if end in used_elements:
+                if start_down in used_elements:
                     logging.debug('already used this element, not showing duplicate changes')
                     return ''
-                used_elements.append(end)
-
-                logging.debug
-
+                used_elements.append(start_down)
                 string = seq_string[start_down:end]
+
                 logging.debug('in-tag/attribute change :: ' + string)
         else:
             string = seq_string[start:end]
             #logging.debug('simple change!')
 
-        return_val = '<%s>%s</%s>' % (tag, string, tag) if len(string.strip()) else ''
+        return_val = '<%s>%s</%s>' % (tag, string, tag)# if len(string.strip()) else ''
         #logging.debug('change with processing: ' + return_val)
 
         return return_val
 
     for opcode, a0, a1, b0, b1 in seqm.get_opcodes():
         if opcode == 'equal':
-            full_output.append(seqm.a[a0:a1])
+            #full_output.append(seqm.a[a0:a1])
+            logging.debug('appending: ', seqm.a[a0:a1])
         elif opcode == 'insert':
             #full_output.append('<ins>' + seqm.b[b0:b1] + '</ins>')
             full_output.append(apply_tag(seqm.b, b0, b1, 'ins', opcode))
