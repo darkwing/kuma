@@ -37,16 +37,14 @@ def diff_rendered(content_from, content_to):
     tidy_from, errors = _massage_diff_content(content_from)
     tidy_to, errors = _massage_diff_content(content_to)
 
-    from_lines = tidy_from.splitlines()
-    to_lines = tidy_to.splitlines()
-
-    logging.debug(tidy_to)
+    tidy_from = pq(tidy_from).find('body').html()
+    tidy_to = pq(tidy_to).find('body').html()
 
     seqm = difflib.SequenceMatcher(None, tidy_from, tidy_to)
     full_output = []
     used_elements = []
 
-    def apply_tag(seq_string, start, end, tag):
+    def apply_tag(seq_string, start, end, tag, opcode):
         #  Walk backward in the sequence to find a '<' or a '>'
         #  If a '<' is found before a '>', assume it's an in-tag change
         #       and move the tag before and after it
@@ -54,8 +52,10 @@ def diff_rendered(content_from, content_to):
         last_angle = ''
         start_down = start
 
+        logging.debug('-------------------------------------------------')
+
         was = '<%s>%s</%s>' % (tag, seq_string[start:end], tag)
-        logging.debug('Change without processing: ' + was)
+        logging.debug('<' + opcode + '> Change without processing: ' + was)
 
         while start_down > 0:
             #logging.debug(str(start_down) + ' / ' + seq_string[start_down])
@@ -70,23 +70,30 @@ def diff_rendered(content_from, content_to):
 
         return_val = ''
 
+        string = ''
         if last_angle != '>':  # attribute change
-
+            
             #  Detect the tag type
             tag_type = seq_string[start_down+1:end].partition(' ')[0]
 
-            #  Replace the "end" position with the end of the "</tag_type"
-            end_split = seq_string[start_down+1:len(seq_string)].split('</' + tag_type)
-            if len(end_split):
-                end = start_down + 1 + len(end_split[0]) + 2 + len(tag_type) + 1
+            if tag_type != '/':
+                #  Replace the "end" position with the end of the "</tag_type"
+                end_split = seq_string[start_down+1:len(seq_string)].split('</' + tag_type)
 
-            if end in used_elements:
-                logging.debug('already used this element, not showing duplicate changes')
-                return ''
-            used_elements.append(end)
+                logging.debug(tag_type + ' :: end split is: ')
+                logging.debug(end_split)
 
-            string = seq_string[start_down-1:end]
-            logging.debug('in-tag/attribute change')
+                if len(end_split):
+                    end = start_down + 1 + len(end_split[0]) + 2 + len(tag_type) + 1
+
+                if end in used_elements:
+                    logging.debug('already used this element, not showing duplicate changes')
+                    return ''
+                used_elements.append(end)
+
+                string = seq_string[start_down-1:end]
+                logging.debug('in-tag/attribute change')
+            
         else:
             string = seq_string[start:end]
             logging.debug('simple change!')
@@ -101,21 +108,20 @@ def diff_rendered(content_from, content_to):
         if opcode == 'equal':
             full_output.append(seqm.a[a0:a1])
         elif opcode == 'insert':
-            #full_output.append('<ins>' + seqm.b[b0:b1] + '</ins>')
-            full_output.append(apply_tag(seqm.b, b0, b1, 'ins'))
+            full_output.append('<ins>' + seqm.b[b0:b1] + '</ins>')
+            #full_output.append(apply_tag(seqm.b, b0, b1, 'ins', opcode))
         elif opcode == 'delete':
-            #full_output.append('<del>' + seqm.a[a0:a1] + '</del>')
-            full_output.append(apply_tag(seqm.a, a0, a1, 'del'))
+            full_output.append('<del>' + seqm.a[a0:a1] + '</del>')
+            #full_output.append(apply_tag(seqm.a, a0, a1, 'del', opcode))
         elif opcode == 'replace':
-            #full_output.append('<del>' + seqm.a[a0:a1] + '</del>')
-            #full_output.append('<ins>' + seqm.b[b0:b1] + '</ins>')
-            full_output.append(apply_tag(seqm.a, a0, a1, 'del'))
-            full_output.append(apply_tag(seqm.b, b0, b1, 'ins'))
+            full_output.append('<del>' + seqm.a[a0:a1] + '</del>')
+            full_output.append('<ins>' + seqm.b[b0:b1] + '</ins>')
+            #full_output.append(apply_tag(seqm.a, a0, a1, 'del', opcode))
+            #full_output.append(apply_tag(seqm.b, b0, b1, 'ins', opcode))
         else:
             raise RuntimeError('unexpected opcode')
 
     full_output = ''.join(full_output)
-    full_output = pq(full_output).find('body').html()
 
     return full_output
 
