@@ -77,7 +77,7 @@ from wiki.models import (Document, Revision, HelpfulVote, EditorToolbar,
                          DOCUMENT_LAST_MODIFIED_CACHE_KEY_TMPL,
                          get_current_or_latest_revision)
 from wiki.tasks import send_reviewed_notification, schedule_rebuild_kb
-from wiki.helpers import (diff_table, diff_inline, diff_rendered)
+from wiki.helpers import (diff_table, diff_inline, diff_rendered_table)
 import wiki.content
 from wiki import kumascript
 
@@ -1428,7 +1428,7 @@ def compare_revisions(request, document_slug, document_locale):
     inline = diff_inline(revision_from.content, revision_to.content)
 
     # Create the rendered diff
-    rendered_diff = diff_rendered(revision_from.content, revision_to.content)
+    rendered_diff = diff_rendered_table(revision_from.content, revision_to.content)
             
     context = {'document': doc, 'revision_from': revision_from,
                          'revision_to': revision_to, 'table': table,

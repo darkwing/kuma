@@ -27,7 +27,22 @@ def show_inline_diff(content_from, content_to):
     tidy_from, errors = _massage_diff_content(content_from)
     tidy_to, errors = _massage_diff_content(content_to)
     sm = difflib.SequenceMatcher(None, tidy_from, tidy_to)
-    
+
+
+def diff_rendered_table(content_from, content_to):
+    table = diff_table(content_from, content_to, '', '')
+    table = pq(table)
+
+    rows = table.find('tbody tr')
+    output = ''
+    if len(rows):
+        output = '<table border="1">'
+        for row in rows:
+            output += '<tr><td><p>%s</p></td><td><p>%s</p></td></tr>' % (pq(row).find('td').eq(2).html(), pq(row).find('td').eq(5).html())
+        output+= '</table>'
+
+    return jinja2.Markup(output)
+
 
 def diff_rendered(content_from, content_to):
     """ blah """
@@ -36,6 +51,9 @@ def diff_rendered(content_from, content_to):
 
     tidy_from, errors = _massage_diff_content(content_from)
     tidy_to, errors = _massage_diff_content(content_to)
+
+    logging.debug('tidy_from: ' + tidy_from)
+    logging.debug('tidy_to: ' + tidy_to)
 
     tidy_from = pq(tidy_from).find('body').html()
     tidy_to = pq(tidy_to).find('body').html()
@@ -107,7 +125,7 @@ def diff_rendered(content_from, content_to):
     for opcode, a0, a1, b0, b1 in seqm.get_opcodes():
         if opcode == 'equal':
             #full_output.append(seqm.a[a0:a1])
-            logging.debug('appending: ', seqm.a[a0:a1])
+            logging.debug('')
         elif opcode == 'insert':
             #full_output.append('<ins>' + seqm.b[b0:b1] + '</ins>')
             full_output.append(apply_tag(seqm.b, b0, b1, 'ins', opcode))
@@ -191,7 +209,7 @@ def diff_table(content_from, content_to, prev_id, curr_id):
     """Creates an HTML diff of the passed in content_from and content_to."""
     tidy_from, errors = _massage_diff_content(content_from)
     tidy_to, errors = _massage_diff_content(content_to)
-    html_diff = difflib.HtmlDiff(wrapcolumn=DIFF_WRAP_COLUMN)
+    html_diff = difflib.HtmlDiff(wrapcolumn=False)
     from_lines = tidy_from.splitlines()
     to_lines = tidy_to.splitlines()
     try:
