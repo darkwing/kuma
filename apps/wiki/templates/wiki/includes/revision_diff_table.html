@@ -1,3 +1,4 @@
+{% if waffle.flag('rendered_diff') %}
 <div class="rev-def-wrapper">
 	<span class="rev-def-check">
 		<label for="rev-def-checkbox">{{ _('View raw HTML') }}</label>
@@ -66,3 +67,6 @@ function swapPane(checked) {
 	$($divs.get(checked ? 1 : 0)).addClass(showClass);
 }
 </script>
+{% else %}
+	{{ diff_table(revision_from.content, revision_to.content, revision_from.id, revision_to.id) }}
+{% endif %}
