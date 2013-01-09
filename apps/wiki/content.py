@@ -409,10 +409,26 @@ class SectionIDFilter(html5lib_Filter):
                 # Slugify the text we found inside the header, generate an ID
                 # as a last resort.
                 slug = self.slugify(u''.join(text))
+
                 if not slug:
                     slug = self.gen_id()
+                elif slug in self.known_ids:
+                    logging.debug(slug + ' is a known id')
+                    start_inc = 2
+                    while start_inc:
+                        inc_id = slug + '_' + str(start_inc)
+                        if inc_id in self.known_ids:
+                            start_inc += 1
+                            pass
+                        else:
+                            slug = inc_id
+                            break
+
+                logging.debug('Final slug: ' + slug)
+
                 attrs['id'] = slug
                 start['data'] = attrs.items()
+                self.known_ids.add(slug)
 
                 # Finally, emit the tokens we scooped up for the header.
                 yield start
