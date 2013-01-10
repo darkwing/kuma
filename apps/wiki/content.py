@@ -413,7 +413,6 @@ class SectionIDFilter(html5lib_Filter):
                 if not slug:
                     slug = self.gen_id()
                 elif slug in self.known_ids:
-                    logging.debug(slug + ' is a known id')
                     start_inc = 2
                     while start_inc:
                         inc_id = slug + '_' + str(start_inc)
@@ -423,8 +422,6 @@ class SectionIDFilter(html5lib_Filter):
                         else:
                             slug = inc_id
                             break
-
-                logging.debug('Final slug: ' + slug)
 
                 attrs['id'] = slug
                 start['data'] = attrs.items()

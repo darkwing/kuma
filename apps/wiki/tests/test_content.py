@@ -91,6 +91,13 @@ class ContentSectionToolTests(TestCase):
 
         eq_(result_src, expected)
 
+        # Ensure 1, 2 doesn't turn into 3, 4
+        result_src = (wiki.content
+                      .parse(expected)
+                      .injectSectionIDs()
+                      .serialize())
+        eq_(result_src, expected)        
+
 
     def test_simple_implicit_section_extract(self):
         doc_src = """
