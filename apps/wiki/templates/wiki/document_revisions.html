@@ -122,8 +122,8 @@
         $('#pagination-all').click(function(e) {
           e.preventDefault();
           var url = e.target.href +
-                    '&from=' + $("input[name=from]:checked").val() + 
-                    '&to=' + $("input[name=to]:checked").val();
+                    '&from=' + $('input[name=from]:checked').val() + 
+                    '&to=' + $('input[name=to]:checked').val();
           window.location = url;
         });
       }
