@@ -43,10 +43,10 @@
             {% if loop.first %}<ul>{% endif %}
             <li class="{% if document.current_revision.id == rev %}current{% endif %}{% if rev.reviewed and not rev.is_approved %}rejected{% endif %}">
               <div class="radio">
-                {% if not current %}<input type="radio" name="from" value="{{ rev.id }}" {% if loop.index == 2 %}checked="checked"{% endif %} />{% endif %}
+                {% if not current %}<input type="radio" name="from" value="{{ rev.id }}" {% if loop.index == 2 or rev.id == checked_from %}checked="checked"{% endif %} />{% endif %}
               </div>
               <div class="radio">
-                {% if not loop.last %}<input type="radio" name="to" value="{{ rev.id }}" {% if loop.first %}checked="checked"{% endif %} />{% endif %}
+                {% if not loop.last %}<input type="radio" name="to" value="{{ rev.id }}" {% if loop.first or rev.id == checked_to %}checked="checked"{% endif %} />{% endif %}
               </div>
               <div class="date">
                 <a href="{{ url('wiki.revision', document.full_path, rev.id) }}" rel="nofollow, noindex">{{ datetimeformat(rev.created, format='datetime') }}</a>
@@ -100,9 +100,9 @@
       {% endif %}
     </div>
   </article>
-
-      {{ page|paginator }}
-
+      {% if page %}
+        {{ page|paginator }}
+      {% endif %}
     </div>
    </div>
 </section>
@@ -119,6 +119,13 @@
         next = pagination.find('.next');
       if(next.length) {
         pagination.append('<li><a href="?limit=all" id="pagination-all">' + gettext('View All') + '</a></li>');
+        $('#pagination-all').click(function(e) {
+          e.preventDefault();
+          var url = e.target.href +
+                    '&from=' + $("input[name=from]:checked").val() + 
+                    '&to=' + $("input[name=to]:checked").val();
+          window.location = url;
+        });
       }
     });
   </script>

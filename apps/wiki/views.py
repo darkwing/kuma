@@ -1354,7 +1354,9 @@ def document_revisions(request, document_slug, document_locale):
                 .defer('summary', 'content')
                 .order_by('-created', '-id'))
     page = None
-    per_page = request.GET.get('limit', 10)
+    per_page = request.GET.get('limit', DOCUMENTS_PER_PAGE)
+    checked_from = int(request.GET.get('from', 0))
+    checked_to = int(request.GET.get('to', 0))
 
     if per_page != 'all':
         try:
@@ -1370,9 +1372,13 @@ def document_revisions(request, document_slug, document_locale):
     revs_out = [r for r in revs if r.id == curr_id]
     revs_out.extend([r for r in revs if r.id != curr_id])
 
+    logging.debug('checked_from')
+    logging.debug(checked_from)
+
     return jingo.render(request, 'wiki/document_revisions.html',
                         {'revisions': revs_out, 'document': doc,
-                         'page': page, 'revs': revs, 'curr_id': curr_id})
+                         'page': page, 'revs': revs, 'curr_id': curr_id,
+                         'checked_from': checked_from, 'checked_to': checked_to})
 
 
 @login_required
