@@ -1371,10 +1371,6 @@ def document_revisions(request, document_slug, document_locale):
     curr_id = doc.current_revision.id
     revs_out = [r for r in revs if r.id == curr_id]
     revs_out.extend([r for r in revs if r.id != curr_id])
-
-    logging.debug('checked_from')
-    logging.debug(checked_from)
-
     return jingo.render(request, 'wiki/document_revisions.html',
                         {'revisions': revs_out, 'document': doc,
                          'page': page, 'revs': revs, 'curr_id': curr_id,
