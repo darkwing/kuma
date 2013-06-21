@@ -98,7 +98,7 @@
         if (!wiki_article.length) { return; }
         
         // Wire up the wiki article with an event delegation handler
-        wiki_article.click(function (ev) {
+        wiki_article.on('click', function (ev) {
             var target = $(ev.target);
             if (target.is('a.edit-section')) { 
                 // Caught a section edit link click.
@@ -299,7 +299,7 @@
     // Add `odd` CSS class to home page content sections for older browsers.
     function initClearOddSections() {
         clearOddSections();
-        $('#os, #browser').change(clearOddSections);
+        $('#os, #browser').on('change', clearOddSections);
     }
 
     function clearOddSections() {
@@ -374,7 +374,7 @@
                     // Toggle the additional information in the `details` element
                     $detailsNotSummary.slideToggle();
                     $details.toggleClass('open');
-                }).keyup(function(event) {
+                }).on('keyup', function(event) {
                     if (13 === event.keyCode || 32 === event.keyCode) {
                         // Enter or Space is pressed -- trigger the `click` event on the `summary` element
                         // Opera already seems to trigger the `click` event when Enter is pressed
@@ -590,11 +590,11 @@
             updateHashFragment();
         }
 
-        $osMenu.change(handleDependencies);
-        $osMenu.change(persistSelection);
-        $osMenu.change(updateForsAndToc);
-        $browserMenu.change(persistSelection);
-        $browserMenu.change(updateForsAndToc);
+        $osMenu.on('change', handleDependencies);
+        $osMenu.on('change', persistSelection);
+        $osMenu.on('change', updateForsAndToc);
+        $browserMenu.on('change', persistSelection);
+        $browserMenu.on('change', updateForsAndToc);
 
         // Fire off the change handler for the first time:
         updateForsAndToc();
@@ -780,7 +780,7 @@
     var voted = false;
     function initHelpfulVote() {
         var $btns = $('#helpful-vote input[type="submit"]');
-        $btns.click(function(e) {
+        $btns.on('click', function(e) {
             if (!voted) {
                 var $btn = $(this),
                     $form = $btn.closest('form'),
@@ -842,7 +842,7 @@
     }
 
     function initTitleAndSlugCheck() {
-        $('#id_title').change(function() {
+        $('#id_title').on('change', function() {
             var $this = $(this),
                 $form = $this.closest('form'),
                 title = $this.val(),
@@ -852,7 +852,7 @@
             // off change event.
             verifySlugUnique(slug, $form);
         });
-        $('#id_slug').change(function() {
+        $('#id_slug').on('change', function() {
             var $this = $(this),
                 $form = $this.closest('form'),
                 slug = $('#id_slug').val();
@@ -1034,7 +1034,7 @@
     // 
     function initSaveAndEditButtons () {
         // Save button submits to top-level
-        $('#btn-save').click(function () {
+        $('#btn-save').on('click', function () {
             if (supportsLocalStorage) {
                 // Clear any preserved content.
                 clearDraft();
@@ -1048,7 +1048,7 @@
 
         // Save-and-edit submits to a hidden iframe, style the button with a
         // loading anim.
-        $('#btn-save-and-edit').click(function () {
+        $('#btn-save-and-edit').on('click', function () {
             var savedTa = $(formSelector + ' textarea[name=content]').val();
             if (supportsLocalStorage) {
                 // Preserve editor content, because saving to the iframe can
@@ -1067,7 +1067,7 @@
         });
         $('#btn-save-and-edit').show();
 
-        $('#save-and-edit-target').load(function () {
+        $('#save-and-edit-target').on('load', function () {
             if (supportsLocalStorage) {
                 var if_doc = $('#save-and-edit-target')[0].contentDocument;
                 if (typeof(if_doc) != 'undefined') {
@@ -1169,7 +1169,7 @@
         }
 
         // Clear draft upon discard
-       $('#btn-discard').click(function() {
+       $('#btn-discard').on('click', function() {
             clearTimeout(DRAFT_TIMEOUT_ID);
            clearDraft();
        });
@@ -1180,12 +1180,12 @@
         var approveModal = $('#approve-modal'),
             rejectModal = $('#reject-modal');
 
-        $('#btn-approve').click(function() {
+        $('#btn-approve').on('click', function() {
             approveModal.show();
             rejectModal.hide();
         });
         approveModal.hide();
-        $('#btn-reject').click(function() {
+        $('#btn-reject').on('click', function() {
             rejectModal.show();
             approveModal.hide();
         });
@@ -1201,7 +1201,7 @@
             $htab.append($('div[id=compat-desktop]')[index]);
             $htab.append($('div[id=compat-mobile]')[index]);
 
-            $items.find('a').click(function() {
+            $items.find('a').on('click', function() {
                 var $this = $(this)
                 $items.removeClass('selected');
                 $this.parent().addClass('selected');
@@ -1230,7 +1230,7 @@
         }
 
         // Upon click of the 'Attach Files' button, toggle display of upload table
-        $attachmentsButton.bind('click', function(e) {
+        $attachmentsButton.on('click', function(e) {
             e.preventDefault();
             $attachmentsNewTable.toggleClass('hidden');
             if(!$attachmentsNewTable.hasClass('hidden')) {
@@ -1239,7 +1239,7 @@
         });
 
         // Clicking the 'AMF' button adds more rows
-        $('#page-attachments-more').bind('click', function() {
+        $('#page-attachments-more').on('click', function() {
             // Don't add boxes during submission
             if(running) return;
             function clone() {
@@ -1264,7 +1264,7 @@
         $("<input type='hidden' name='is_ajax' value='1' />").appendTo($attachmentsForm);
 
         // Submitting the form posts to mystical iframe
-        $iframe.bind('load', function(e) {
+        $iframe.on('load', function(e) {
             running = false;
             $attachmentsForm.data('disabled', false);
 
@@ -1345,7 +1345,7 @@
         });
 
         // Form submission, upload, and response handling
-        $attachmentsForm.attr('target', 'page-attachments-upload-target').bind('submit', function(e) {
+        $attachmentsForm.attr('target', 'page-attachments-upload-target').on('submit', function(e) {
             // Stop concurrent submissions
             if(running) return;
             // Hide all error messages
