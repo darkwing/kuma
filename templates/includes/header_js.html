@@ -1,0 +1,19 @@
+<!--[if IE]>
+<meta http-equiv="imagetoolbar" content="no">
+<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+<script src="{{ MEDIA_URL }}js/libs/html5.js"></script>
+<![endif]-->
+
+<script type="text/javascript">
+// This represents the site configuration
+// TODO:  Move this to its own module when we're AMD-ready
+window.mdn = {
+  build: '{{ BUILD_ID_JS }}',
+  // Setting these objects up for later use
+  ckeditor: {},
+  mediaPath: '{{ MEDIA_URL }}',
+  wiki: {
+    autosuggestTitleUrl: '{{ url('wiki.autosuggest_documents') }}'
+  }
+};
+</script>

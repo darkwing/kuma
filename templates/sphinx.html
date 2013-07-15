@@ -1,0 +1,44 @@
+{% from "includes/common_macros.html" import optimizely_script with context %}
+
+{% include "includes/doctype.html" %}
+
+<head>
+  {{ optimizely_script() }}
+  <title>{% block title %}{{ _('Mozilla Developer Network') }}{% endblock %}</title>
+    
+  {% include "includes/meta.html" %}
+
+  {% include "includes/css.html" %}
+
+  {% include "includes/header_js.html" %}
+
+  {% block extrahead %}{% endblock %}
+  {% include "includes/google_analytics.html" %}
+</head>
+
+<body id="{% block pageid %}{% endblock %}" class="html-{{ DIR }}" role="document">
+
+  {% include "includes/header_start.html" %}
+    
+      {% include "includes/header_branding.html" %}  
+      
+      {% include "includes/header_menu.html" %}  
+    
+      {% include "includes/login.html" %}
+    
+    {% include "includes/header_end.html" %}  
+
+{{ soapbox_messages(get_soapbox_messages(request.path)) }}
+
+<!-- TODO:  include wiki content-start html -->
+
+{% block content %}{% endblock %}
+
+<!-- TODO:  include wiki content-end html -->
+
+{% include "includes/footer.html" %}
+
+{% include "includes/footer_js.html" %}
+
+</body>
+</html>
