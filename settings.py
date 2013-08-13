@@ -1,4 +1,4 @@
-# Django settings for kitsune project.
+# Django settings for kuma project.
 from datetime import date
 import logging
 import os
@@ -303,7 +303,7 @@ SERVE_MEDIA = False
 
 # Paths that don't require a locale prefix.
 SUPPORTED_NONLOCALES = ('media', 'admin', 'robots.txt', 'services', 'static',
-                        '1', 'files', '@api', )
+                        '1', 'files', '@api', 'grappelli')
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = '#%tc(zja8j01!r#h_y)=hy!^k)9az74k+-ib&ij&+**s3-e^_z'
@@ -314,6 +314,13 @@ TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.Loader',
     'django.template.loaders.app_directories.Loader',
 #     'django.template.loaders.eggs.Loader',
+)
+
+JINGO_EXCLUDE_APPS = (
+    'admin',
+    'admindocs',
+    'registration',
+    'grappelli',
 )
 
 TEMPLATE_CONTEXT_PROCESSORS = (
@@ -361,7 +368,6 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'sumo.anonymous.AnonymousIdentityMiddleware',
     'sumo.middleware.PlusToSpaceMiddleware',
-    #'dekicompat.middleware.DekiUserMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'users.middleware.BanMiddleware',
     'django_statsd.middleware.GraphiteRequestTimingMiddleware',
@@ -373,7 +379,6 @@ AUTHENTICATION_BACKENDS = (
     'django_browserid.auth.BrowserIDBackend',
     'django.contrib.auth.backends.ModelBackend',
     'teamwork.backends.TeamworkBackend',
-    'dekicompat.backends.DekiUserBackend',
 )
 AUTH_PROFILE_MODULE = 'devmo.UserProfile'
 
@@ -399,6 +404,11 @@ TEMPLATE_DIRS = (
     path('templates'),
 )
 
+STATICFILES_FINDERS = (
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+)
+
 # TODO: Figure out why changing the order of apps (for example, moving taggit
 # higher in the list) breaks tests.
 INSTALLED_APPS = (
@@ -408,7 +418,11 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.messages',
+
+    'grappelli.dashboard',
+    'grappelli',
     'django.contrib.admin',
+    
     'django.contrib.sitemaps',
     'django.contrib.staticfiles',
 
@@ -416,7 +430,6 @@ INSTALLED_APPS = (
     'django_browserid',
 
     # MDN
-    'dekicompat',
     'devmo',
     'docs',
     'feeder',
@@ -535,13 +548,20 @@ MINIFY_BUNDLES = {
         'mdn': (
             'css/fonts.css',
             'css/mdn-screen.css',
-            'css/modals.css',
             'css/video-player.css',
             'css/mdn-calendar.css',
             'css/redesign-transition.css',
         ),
+        'popup': (
+            'css/jqueryui/jqueryui.css',
+            'css/jqueryui/jquery-ui-1.8.14.custom.css',
+            'css/jqueryui/moz-jquery-plugins.css',
+        ),
         'demostudio': (
             'css/demos.css',
+            'css/jqueryui/jqueryui.css',
+            'css/jqueryui/jquery-ui-1.8.14.custom.css',
+            'css/jqueryui/moz-jquery-plugins.css',
         ),
         'devderby': (
             'css/devderby.css',
@@ -554,7 +574,6 @@ MINIFY_BUNDLES = {
         ),
         'wiki': (
             'css/wiki.css',
-            'css/modals.css',
             'css/wiki-screen.css',
             'js/libs/jquery-ui-1.10.3.custom/css/ui-lightness/jquery-ui-1.10.3.custom.min.css',
             'css/jqueryui/moz-jquery-plugins.css',
@@ -580,8 +599,8 @@ MINIFY_BUNDLES = {
             'js/libs/prism/prism.css',
             'js/libs/prism/plugins/line-highlight/prism-line-highlight.css',
             'js/libs/prism/plugins/ie8/prism-ie8.css',
-            'prism-mdn/plugins/line-numbering/prism-line-numbering.css',
-            'prism-mdn/components/prism-json.css',
+            'js/prism-mdn/plugins/line-numbering/prism-line-numbering.css',
+            'js/prism-mdn/components/prism-json.css',
         ),
     },
     'js': {
@@ -599,8 +618,13 @@ MINIFY_BUNDLES = {
 
             # Used only on pages with video popups
             'js/libs/video-player.js',
-
-            'js/libs/jquery.simplemodal.1.4.1.min.js',
+        ),
+        'popup': (
+            'js/libs/jquery-1.9.1.js',
+            'js/jquery-upgrade-compat.js',
+            'js/libs/jqueryui.min.js',
+            'js/modal-control.js',
+            'js/init.js',
         ),
         'profile': (
             'js/profile.js',
@@ -614,7 +638,8 @@ MINIFY_BUNDLES = {
             'js/libs/jquery.hoverIntent.minified.js',
             'js/libs/jquery.scrollTo-1.4.2-min.js',
             'js/demos.js',
-            'js/modal-control.js'
+            'js/libs/jqueryui.min.js',
+            'js/modal-control.js',
         ),
         'demostudio_devderby_landing': (
             'js/demos-devderby-landing.js',
@@ -655,8 +680,8 @@ MINIFY_BUNDLES = {
             'js/framebuster.js',
         ),
         'syntax-prism': (
-            'prism-mdn/components/prism-json.js',
-            'prism-mdn/plugins/line-numbering/prism-line-numbering.js',
+            'js/prism-mdn/components/prism-json.js',
+            'js/prism-mdn/plugins/line-numbering/prism-line-numbering.js',
             'js/syntax-prism.js',
         ),
         'ace-editor': (
@@ -996,6 +1021,11 @@ CONSTANCE_CONFIG = dict(
         ]),
         "JSON array listing tag suggestions for documents"
     ),
+
+    EXTERNAL_SIGNUP_EMAIL = (
+        '',
+        'The email address to receive external docs signup emails.'
+    ),
 )
 
 BROWSERID_VERIFICATION_URL = 'https://verifier.login.persona.org/verify'
@@ -1081,3 +1111,6 @@ TEAMWORK_BASE_POLICIES = {
     'authenticated': (
         'wiki.view_document', 'wiki.add_document', 'wiki.add_revision'),
 }
+
+GRAPPELLI_ADMIN_TITLE = 'Mozilla Developer Network - Admin'
+GRAPPELLI_INDEX_DASHBOARD = 'admin_dashboard.CustomIndexDashboard'

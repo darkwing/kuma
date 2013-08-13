@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import include, patterns, url
+from django.conf.urls import include, patterns, url
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
@@ -14,11 +14,11 @@ urlpatterns = patterns('',
    # Home / landing pages:
     ('', include('landing.urls')),
     ('', include('devmo.urls')),
-    (r'^logout/$', 'dekicompat.views.logout'),
     (r'^demos/', include('demos.urls')),
     (r'^demos', lambda x: redirect('demos')),
 
     # Django admin:
+    (r'^grappelli/', include('grappelli.urls')),
     (r'^admin/', include('smuggler.urls')),
     (r'^admin/', include(admin.site.urls)),
 

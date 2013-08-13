@@ -1,4 +1,4 @@
-from django.conf.urls.defaults import patterns, url, include
+from django.conf.urls import include, patterns, url
 
 from sumo.views import redirect_to
 from wiki.feeds import (DocumentsRecentFeed, DocumentsReviewFeed, RevisionsFeed,
@@ -66,6 +66,7 @@ urlpatterns += patterns('wiki.views',
     url(r'^/preview-wiki-content$', 'preview_revision', name='wiki.preview'),
     
     url(r'^/get-documents$', 'autosuggest_documents', name='wiki.autosuggest_documents'),
+    url(r'^/external-signup$', 'external_signup', name='wiki.external_signup'),
     
     url(r'^/category/(?P<category>\d+)$', 'list_documents',
         name='wiki.category'),

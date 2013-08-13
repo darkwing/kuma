@@ -45,6 +45,7 @@ from . import TestCaseBase, FakeResponse, make_test_file
 
 from authkeys.models import Key
 
+from wiki.content import get_seo_description
 from wiki.events import EditDocumentEvent
 from wiki.models import (VersionMetadata, Document, Revision, Attachment,
                          AttachmentRevision, DocumentAttachment, TOC_DEPTH_H4)
@@ -246,6 +247,12 @@ class ViewTests(TestCaseBase):
                 content = 'REDIRECT <a class="redirect" href="x">Blah</a>'
             else:
                 content = test_content
+                revision(document=doc,
+                         content=test_content,
+                         summary=get_seo_description(
+                             test_content,
+                             strip_markup=False),
+                         save=True)
             doc.html = content
             if parent:
                 doc.parent_topic = parent
@@ -1760,6 +1767,26 @@ class DocumentEditingTests(TestCaseBase):
         ok_('A Test Article' in translations.html())
         ok_('English (US)' in translations.text())
 
+    def test_translation_source(self):
+        """Allow users to change "translation source" settings"""
+        self.client.login(username='admin', password='testpass')
+        data = new_document_data()
+        self.client.post(reverse('wiki.new_document'), data)
+        parent = Document.objects.get(locale=data['locale'], slug=data['slug'])
+
+        data.update({'full_path': 'en-US/a-test-article',
+                     'title': 'Another Test Article',
+                     'content': "Yahoooo!",
+                     'parent_id': parent.id})
+        self.client.post(reverse('wiki.new_document'), data)
+        child = Document.objects.get(locale=data['locale'], slug=data['slug'])
+
+        url = reverse('wiki.edit_document', args=[child.slug])
+        response = self.client.get(url)
+        content = pq(response.content)
+        ok_(content('li.metadata-choose-parent'))
+        ok_(str(parent.id) in content.html())
+
     @attr('tags')
     @mock.patch_object(Site.objects, 'get_current')
     def test_document_tags(self, get_current):
@@ -2132,11 +2159,20 @@ class DocumentEditingTests(TestCaseBase):
 
         response = client.post(reverse('wiki.revert_document',
                                        args=[doc.full_path, rev.id]),
-                               {'revert': True})
+                               {'revert': True, 'comment': 'Blah blah'})
 
         ok_(302 == response.status_code)
         rev = doc.revisions.order_by('-id').all()[0]
         ok_('lorem ipsum dolor sit amet' == rev.content)
+        ok_('Blah blah' in rev.comment)
+
+        rev = doc.revisions.order_by('-id').all()[1]
+        response = client.post(reverse('wiki.revert_document',
+                                       args=[doc.full_path, rev.id]),
+                               {'revert': True})
+        ok_(302 == response.status_code)
+        rev = doc.revisions.order_by('-id').all()[0]
+        ok_(not ': ' in rev.comment)
 
 
 class DocumentWatchTests(TestCaseBase):

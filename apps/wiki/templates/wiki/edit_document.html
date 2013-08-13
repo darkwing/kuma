@@ -84,10 +84,16 @@
         </section>
         {% endif %}
 
+        {% if waffle.flag('external_signup') %}
+        <div class="notice" style="margin-bottom:30px;"><p>
+          Do you have docs you want to automatically add to MDN from an external source? 
+          <a href="{{ url('wiki.external_signup') }}" class="button">Let us know!</a>
+        </p></div>
+        {% endif %}
         <header id="article-head">
 
           <div class="title">
-            <h1>{{ _('Editing <em>{title}</em>')|fe(title=revision.title) }}</h1>
+            <h1>{{ _('<span class="action">Editing</span> <em>{title}</em>')|fe(title=revision.title) }}</h1>
             <p class="save-state" id="draft-status">
               {% if not section_id %}
                 <a href="" id="btn-properties">{{ _('Edit Page Title and Properties') }}</a><br />
@@ -104,14 +110,12 @@
                 {% else %}
                   {% include 'wiki/includes/document_toc_field.html' %}
                 {% endif %}
-                {% if show_translation_parent_block %}
                 <li class="metadata-choose-parent">
                     {{_('Find the translation source with the lookup below and then click "Save Changes.')}}
                     <br />
                     <strong>{{_('Lookup:')}}</strong> <input type="text" id="parent_text" />
-                    <input type="hidden" name="parent_id" id="parent_id" />
+                    <input type="hidden" name="parent_id" id="parent_id" value="{{ revision_form.instance.document.parent.id }}" />
                 </li>
-                {% endif %}
             </ul>
           {% endif %}
 

@@ -1,0 +1,13 @@
+<script type="text/javascript">
+  // This represents the site configuration
+  window.mdn = {
+    build: '{{ BUILD_ID_JS }}',
+    ckeditor: {},
+    mediaPath: '{{ MEDIA_URL }}',
+    wiki: {
+      autosuggestTitleUrl: '{{ url('wiki.autosuggest_documents') }}'
+    }
+  };
+  // Ensures gettext always returns something, is always set
+  window.gettext = function(x) { return x; }
+</script>

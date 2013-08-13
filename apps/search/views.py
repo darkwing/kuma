@@ -37,16 +37,24 @@ def search(request):
 
     results = DocumentType.search()
     if search_query:
-        results = (results.query(or_={'title__text': search_query,
-                                   'content__text': search_query})
+        query_fields = ['title', 'content', 'summary']
+        or_dict = {}
+        for field in query_fields:
+            or_dict[field + '__text'] = search_query
+        results = (results.query(or_=or_dict)
                           .filter(locale=request.locale)
-                          .highlight('content'))
+                          .highlight(*DocumentType.excerpt_fields))
     result_count = results.count()
     results = results[start:end]
 
-    return render(request, 'search/results.html', {'results': results,
+    template = 'results.html'
+    if flag_is_active(request, 'redesign'):
+        template = 'results-redesign.html'
+
+    return render(request, 'search/%s' % template, {'results': results,
             'search_query': search_query,
             'result_count': result_count,
+            'current_page': page,
             'prev_page': page - 1 if start > 0 else None,
             'next_page': page + 1 if end < result_count else None})
 
