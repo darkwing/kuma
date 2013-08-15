@@ -1,3 +1,49 @@
+/* animation for search */
+@keyframes searchBoxExpand {
+	to {
+		width 500px
+	}
+	from {
+		width 180px
+	}
+}
+@keyframes searchBoxExpandBack {
+	from {
+		width 500px
+	}
+	to {
+		width 180px
+	}
+}
+
+@keyframes searchBoxExpandFade {
+	to {
+		opacity 0
+		width 0
+		max-width 0
+	}
+	from {
+		max-width 1000px
+		width auto
+		opacity 1
+	}
+}
+
+@keyframes searchBoxExpandFadeBack {
+	from {
+		opacity 0
+		width 0
+		max-width 0
+	}
+	to {
+		max-width 1000px
+		width auto
+		opacity 1
+	}
+}
+
+
+
 /* header */
 #main-header
 	create-gradient-background(header-background-color)
@@ -28,9 +74,15 @@
 			position relative
 			opacity 1
 			max-width 1000px
+			/*
 			vendorize(transition-property, all)
-			vendorize(transition-duration, animation-duration)
-			vendorize(transition-delay, animation-duration)
+			vendorize(transition-duration, anim-duration)
+			vendorize(transition-delay, anim-duration)
+			*/
+
+			vendorize(animation-name, searchBoxExpandFadeBack)
+			vendorize(animation-duration, 0.5s)
+			vendorize(animation-delay, 0.6s)
 
 			> a
 				compat-important(color, menu-link-color)
@@ -86,14 +138,26 @@
 
 	&.expand
 		input 
-			width 500px
-
+			/* width 500px */
+			vendorize(animation-name, searchBoxExpand)
+			vendorize(animation-duration, 0.5s)
+			vendorize(animation-delay, 0.6s)
+			
 		> ul > li:not(:last-child)
 			opacity 0
 			width 0
 			max-width 0
 			overflow hidden
-			vendorize(transition-delay, 0)
+
+			vendorize(animation-name, searchBoxExpandFade)
+			vendorize(animation-duration, 0.5s)
+			vendorize(animation-delay, 0)
+
+	
+	> ul > li:not(:last-child)
+		vendorize(animation-name, searchBoxExpandFade)
+		vendorize(anim-duration, 0.5s)
+	
 
 
 .search-wrap
@@ -109,8 +173,10 @@
 		font-weight bold
 		width 180px
 		compat-only(padding, 0)
-		vendorize(transition-property, width)
-		vendorize(transition-duration, animation-duration)
+
+		vendorize(animation-name, searchBoxExpandBack)
+		vendorize(animation-duration, 0.5s)
+		vendorize(animation-delay, 0)
 
 		&::-webkit-input-placeholder
 			color text-color

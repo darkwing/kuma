@@ -101,7 +101,7 @@ document.documentElement.className += ' js';
 				timeout && clearTimeout(timeout);
 				timeout = setTimeout(function() {
 					$nav[action + 'Class']('expand');
-				}, delay);
+				}, 0 /*delay*/);
 			}
 		};
 
