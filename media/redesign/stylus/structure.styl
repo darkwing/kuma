@@ -2,17 +2,16 @@
 @keyframes searchBoxExpand {
 	to {
 		width 500px
-	}
-	from {
-		width 180px
+		background pink
 	}
 }
 @keyframes searchBoxExpandBack {
-	from {
-		width 500px
-	}
 	to {
 		width 180px
+		background lightblue
+	}
+	from {
+		width 500px
 	}
 }
 
@@ -30,15 +29,15 @@
 }
 
 @keyframes searchBoxExpandFadeBack {
-	from {
-		opacity 0
-		width 0
-		max-width 0
-	}
 	to {
 		max-width 1000px
 		width auto
 		opacity 1
+	}
+	from {
+		opacity 0
+		width 0
+		max-width 0
 	}
 }
 
@@ -74,15 +73,6 @@
 			position relative
 			opacity 1
 			max-width 1000px
-			/*
-			vendorize(transition-property, all)
-			vendorize(transition-duration, anim-duration)
-			vendorize(transition-delay, anim-duration)
-			*/
-
-			vendorize(animation-name, searchBoxExpandFadeBack)
-			vendorize(animation-duration, 0.5s)
-			vendorize(animation-delay, 0.6s)
 
 			> a
 				compat-important(color, menu-link-color)
@@ -137,26 +127,24 @@
 			z-index 1
 
 	&.expand
-		input 
-			/* width 500px */
+		input
 			vendorize(animation-name, searchBoxExpand)
 			vendorize(animation-duration, 0.5s)
 			vendorize(animation-delay, 0.6s)
+			vendorize(animation-fill-mode, forwards)
 			
 		> ul > li:not(:last-child)
-			opacity 0
-			width 0
-			max-width 0
-			overflow hidden
-
 			vendorize(animation-name, searchBoxExpandFade)
 			vendorize(animation-duration, 0.5s)
 			vendorize(animation-delay, 0)
+			vendorize(animation-fill-mode, forwards)
 
 	
 	> ul > li:not(:last-child)
-		vendorize(animation-name, searchBoxExpandFade)
-		vendorize(anim-duration, 0.5s)
+		vendorize(animation-name, searchBoxExpandFadeBack)
+		vendorize(animation-duration, 0.5s)
+		vendorize(animation-delay, 3s)
+		vendorize(animation-fill-mode, forwards)
 	
 
 
@@ -177,6 +165,7 @@
 		vendorize(animation-name, searchBoxExpandBack)
 		vendorize(animation-duration, 0.5s)
 		vendorize(animation-delay, 0)
+		/* vendorize(animation-fill-mode, forwards) */
 
 		&::-webkit-input-placeholder
 			color text-color
