@@ -12,7 +12,9 @@ document.documentElement.className += ' js';
   */
   (function() {
     var $mainItems = $('#main-nav > ul > li');
-    $mainItems.find('> a').mozMenu();
+    $mainItems.find('> a').mozMenu({
+      isMainMenu: true
+    });
     $mainItems.find('.submenu').mozKeyboardNav();
   })();
 

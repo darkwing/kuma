@@ -14,9 +14,17 @@
     background url('/media/redesign/img/temporary-logo.png') 0 0 no-repeat
     display block
     margin-top 20px
+    /*
+    @extend .offscreen
+    position absolute
+    left gutter-width
+    top 60px
+    */
     float left
 
-#main-nav 
+#main-nav
+  @extend .clear
+  
   > ul
     float right
     margin-top 20px
@@ -171,6 +179,23 @@ a.persona-button
 
     input
       width 100px
+      
+#nav-mobile
+  background rgba(255, 255, 255, 0.2)
+  padding (grid-spacing / 2)
+  margin-bottom grid-spacing
+  
+  .submenu
+    @extend .clear
+    margin-bottom grid-spacing
+    
+  .submenu-column
+    width 45%
+    float left
+    
+    &:first-child
+      margin-right 9%
+  
 
 /* main content area */
 .wrap
@@ -197,9 +222,16 @@ footer
 
 
 
+@media media-query-tablet
+  set-test-element()
+
+
+
+
 /* mobile updates */
 @media media-query-mobile
-
+  set-test-element()
+  
   #main-header
     #tabzilla
       display none
@@ -238,35 +270,14 @@ footer
 
 
 
-<<<<<<< Updated upstream
-/* rtl */
-.html-rtl   
-=======
   /* rtl */
 .html-rtl
-  /*
->>>>>>> Stashed changes
   #main-header
-    .logo  
-      float right
+    .logo
+      left auto
+      right gutter-width
 
   #main-nav
-<<<<<<< Updated upstream
-    > ul 
-      float left
-
-  .user-state  
-    left 200px
-    right auto
-
-    li + li  
-      border-left 1px solid #bbb
-      border-right 0
-      compat-only(padding-left, 10px)
-      compat-only(padding-right, 0) 
-      compat-only(margin-left, 8px)
-      compat-only(margin-right, 0)
-=======
     > ul
       right auto
       left gutter-width
@@ -278,5 +289,3 @@ footer
     li + li
       border-right 1px solid #bbb
       border-left 0
-  */
->>>>>>> Stashed changes

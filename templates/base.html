@@ -95,9 +95,9 @@
   <title>{{ page_title_macro() }}</title>
 
   {{ site_css() }}
-
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" type="text/css" media="print" href="{{ MEDIA_URL }}redesign/css/print.css" />
-
   <meta charset="utf-8">
   <meta name="robots" content="index, follow">
   <link rel="home" href="{{ url('home') }}">
@@ -203,6 +203,8 @@
           <button type="submit">{{ _('Search') }}</button>
         </div>
       </form></li>{% endif %}</ul></nav>
+      
+      <div id="nav-mobile" class="hidden"></div>
   </div></header>
 
   <!-- Banner here, if present.  Usually from zone landing -->

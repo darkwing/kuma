@@ -134,6 +134,12 @@ enable-toc-toggle()
 
       i
         display inline-block
+        
+/* Sets the display of the test element, used for mobile */
+set-test-element()
+  #test-div
+    z-index 2
+    @extend .offscreen
 
 /*
   CLASSES TO BE EXTENDED BY OTHER CLASSES

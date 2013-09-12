@@ -1,6 +1,7 @@
 (function($) {
 
   var focusClass = 'focused';
+  var isMobile = $('<div id="test-div"></div>').appendTo(document.body).css('z-index') > 1;
 
   /*
     Plugin to create nav menus, show/hide delays, etc.
@@ -14,13 +15,16 @@
       submenu: null,
       focusOnOpen: true,
       brickOnClick: false,
+      isMainMenu: false,
       onOpen: function(){},
       onClose: function() {}
     }, options);
 
     var closeTimeout;
     var showTimeout;
-
+    
+    var $lastMobileItem, $lastMobileSubmenu;
+    
     return $(this).each(function() {
       var $self = $(this);
       var $li = $self.parent();
@@ -118,6 +122,25 @@
           settings.onOpen();
         }, settings.showDelay);
       });
+
+      
+      // Mobile touch main menu
+      console.log(isMobile, settings.isMainMenu, $submenu.length, this);
+      if(isMobile && settings.isMainMenu && $submenu.length) {
+        $self.on('click', function(e) {
+          e.preventDefault();
+
+          // Put the previous menu back
+          if($lastMobileItem) {
+            $lastMobileSubmenu.appendTo($lastMobileItem);
+          }
+          $lastMobileItem = $li;
+          $lastMobileSubmenu = $submenu;
+
+          // Move this menu to its proper place
+          $submenu.appendTo($('#nav-mobile').removeClass('hidden'));
+        });
+      }
     });
 
     // Clears the current timeout, interrupting fade-ins and outs as necessary
