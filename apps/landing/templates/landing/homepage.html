@@ -18,6 +18,112 @@
 
 {% block content %}
 
+{% if waffle.flag('redesign') %}
+
+<!-- callout area -->
+<div class="column-container">
+  <div class="column-callout callout-apps">
+    {{ _('Create Web Apps') }}
+    <i class=""></i>
+  </div>
+  <div class="column-callout callout-android">
+    {{ _('Develop Firefox for Android') }}
+    <i class=""></i>
+  </div>
+  <div class="column-callout callout-firefoxos">
+    {{ _('Build Firefox OS') }}
+    <i class=""></i>
+  </div>
+</div>
+
+<!-- hacks area -->
+<div class="column-container">
+  <div class="column-hacks">
+    <h2>[logo] Hacks Blog <a href="">{{ _('read more at hacks.mozilla.org <i class="icon-arrow-right"></i>') }}</a></h2>
+    <ul>
+      <li>
+      <h3><a href="">Build a web for beginners</a></h3>
+      <p>Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero sit amet quam egestas semper. Aenean ultricies mi vitae est. Mauris placerat eleifend leo.</p>
+      <p class="hacks-author">by <a href="">David Walsh</a> on August 21, 2013</p>
+      </li>
+      <li>
+      <h3><a href="">Build a web for beginners</a></h3>
+      <p>Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero sit amet quam egestas semper. Aenean ultricies mi vitae est. Mauris placerat eleifend leo.</p>
+      <p class="hacks-author">by <a href="">David Walsh</a> on August 21, 2013</p>
+      </li>
+      <li>
+      <h3><a href="">Build a web for beginners</a></h3>
+      <p>Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero sit amet quam egestas semper. Aenean ultricies mi vitae est. Mauris placerat eleifend leo.</p>
+      <p class="hacks-author">by <a href="">David Walsh</a> on August 21, 2013</p>
+      </li>
+    </ul>
+  </div>
+  <div class="column-involved">
+    <div class="home-involved-card">
+      <h3>{{ _('Get Involved') }}</h3>
+      <p>{{ _('<span class="number">5,000</span> contributors from <span class="number">125</span> countries in <span class="number">85</span> languages.') }}</p>
+      <a href="">{{ _('Contribute to MDN') }}</a>
+    </div>
+  </div>
+</div>
+
+<!-- demos and dev derby -->
+<div class="home-demos">
+
+</div>
+
+<!-- contributions section -->
+<div class="home-contribute">
+  <h2>[image] {{ _('How to contribute to MDN') }}</h2>
+
+  <div class="column-container">
+    <div class="column-half">
+      <p>Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat vitae, ultricies eget, tempor sit amet, ante. Donec eu libero sit amet quam egestas semper. Aenean ultricies mi vitae est. Mauris placerat eleifend leo.</p>
+    </div>
+    <div class="column-half">
+      <div class="column-container">
+        <div class="column-half">
+          <ul>
+          <li><a href="">Building the web for beginners</a></li>
+          <li><a href="">Building your first web app</a></li>
+          <li><a href="">WebGL for 3D games</a></li>
+          </ul>
+        </div>
+        <div class="column-half">
+          <ul>
+          <li><a href="">Building the web for beginners</a></li>
+          <li><a href="">Building your first web app</a></li>
+          <li><a href="">WebGL for 3D games</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="column-container">
+    <div class="column-half">
+      <h3>{{ _('Recent Edits') }}</h3>
+      <ul>
+        <li><a href="">Building the web for beginners</a> by <a href="">David Walsh</a> on August 2, 2013</li>
+        <li><a href="">Building the web for beginners</a> by <a href="">David Walsh</a> on August 2, 2013</li>
+        <li><a href="">Building the web for beginners</a> by <a href="">David Walsh</a> on August 2, 2013</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="column-half">
+      <h3>{{ _('Recent Discussions') }}</h3>
+      <ul>
+        <li><a href="">Building the web for beginners</a> by <a href="">David Walsh</a> on August 2, 2013</li>
+        <li><a href="">Building the web for beginners</a> by <a href="">David Walsh</a> on August 2, 2013</li>
+        <li><a href="">Building the web for beginners</a> by <a href="">David Walsh</a> on August 2, 2013</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+
+{% else %}
 <section id="content" class="new-home">
 <div class="wrap">
 
@@ -172,9 +278,9 @@
         {% endif %}
       </div>
   </section>
-
 </div>
 </section><!-- /#content -->
+{% endif %}
 {% endblock %}
 
 {% block js %}
