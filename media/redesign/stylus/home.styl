@@ -32,10 +32,13 @@
 
   /* masthead */
   .home-masthead
+
+    h1, input
+      width 60%
+
     h1
       color #fff
       margin-bottom 0 
-      width 60%
       margin 0 auto
 
       span
@@ -47,7 +50,6 @@
 
       input
         display block
-        width 60%
         margin 0 auto
         font-size larger-font-size
         background rgba(255, 255, 255, 0.2)
@@ -269,6 +271,11 @@
 /* tablet */
 @media media-query-tablet
   #home
+
+    .home-masthead
+        h1, input
+          width 80%
+
     .column-callout
       a
         font-size base-font-size
