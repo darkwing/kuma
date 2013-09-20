@@ -3,6 +3,15 @@
 @import 'grid'
 
 #home
+  background-color #175c9f
+
+  /* general structure adjustments */
+  #main-header
+    background-image none
+    background-color #175c9f
+
+  /* update main nav menu color */
+  override-main-nav-color(#fff)
 
   .main-nav-search
     display none
@@ -14,11 +23,12 @@
     width auto
     padding 0
 
+  /* shared spacing in prominent block*/
+  .home-masthead, .home-hacks, .home-demos, .home-contribute
+    padding first-content-top-padding 0
+
   /* masthead */
   .home-masthead
-    padding first-content-top-padding 0
-    background #175c9f
-
     h1
       color #fff
       margin-bottom 0 
@@ -93,7 +103,7 @@
 
   /* hacks */
   .home-hacks
-    padding first-content-top-padding 0
+    background #fff
 
     .column-hacks
       @extend .column-main
@@ -162,7 +172,6 @@
 /* demos section */
 .home-demos
   background light-background-color
-  padding first-content-top-padding 0
 
   ul
     @extend .clear
@@ -194,7 +203,7 @@
 
 /* contribute section */
 .home-contribute
-  padding first-content-top-padding 0
+  background #fff
 
   a
     text-decoration underline

@@ -138,6 +138,11 @@ enable-toc-toggle()
       i
         display inline-block
 
+/* Overrides the navigation menu color - zones and homepage */
+override-main-nav-color(hex)
+  #main-nav > ul > li > a, .user-state a
+    compat-important(color, hex)
+
 /*
   CLASSES TO BE EXTENDED BY OTHER CLASSES
 

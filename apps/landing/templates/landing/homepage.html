@@ -23,52 +23,52 @@
 <!-- top search area -->
 <div class="home-masthead"><div class="center">
 
-<h1>{{ _('Shared knowledge <span>for the Open Web.</span>') }}</h1>
+  <h1>{{ _('Shared knowledge <span>for the Open Web.</span>') }}</h1>
 
-<div class="home-search-form">
-  <form action="{{ url('search') }}" method="get">
-    <input type="search" placeholder="{{ _('Search the docs') }}" />
-  </form>
-</div> 
+  <div class="home-search-form">
+    <form action="{{ url('search') }}" method="get">
+      <input type="search" placeholder="{{ _('Search the docs') }}" />
+    </form>
+  </div> 
 
-<div class="home-features">
-  <div class="column-container">
-    <div class="column-home-features">
-      <h3>{{ _('Web Platform') }}</h3>
-      <ul>
-        <li><a href="{{ devmo_url('Web/Reference/API') }}">{{ _('Web APIs &amp; DOM') }}</a></li>
-        <li><a href="{{ devmo_url('Web/HTML') }}">{{ _('HTML') }}</a></li>
-        <li><a href="{{ devmo_url('Web/CSS') }}">{{ _('CSS') }}</a></li>
-        <li><a href="{{ devmo_url('Web/JavaScript') }}">{{ _('JavaScript') }}</a></li>
-        <li><a href="{{ devmo_url('Web') }}">{{ _('more...') }}</a></li>
-      </ul>
-    </div>
-    <div class="column-home-features">
-      <h3>{{ _('Zones') }}</h3>
-      <ul>
-      <li><a href="">{{ _('App Center') }}</a></li>
-      <li><a href="">{{ _('Firefox OS') }}</a></li>
-      <li><a href="">{{ _('Firefox Marketplace') }}</a></li>
-      <li><a href="">{{ _('Web Platform') }}</a></li>
-      <li><a href="">{{ _('all zones...') }}</a></li>
-      </ul>
-    </div>
-    <div class="column-home-features">
-      <h3>{{ _('Developer Tools') }}</h3>
-      <ul>
-      <li><a href="{{ devmo_url('Tools/Firefox_OS_Simulator') }}">{{ _('Firefox OS SImulator') }}</a></li>
-      <li><a href="{{ devmo_url('Tools/Page_Inspector') }}">{{ _('Page Inspector') }}</a></li>
-      <li><a href="{{ devmo_url('Tools/Debugger') }}">{{ _('JavaScript Debugger') }}</a></li>
-      <li><a href="{{ devmo_url('Tools/Web_Console') }}">{{ _('Web Console') }}</a></li>
-      <li><a href="{{ devmo_url('Tools') }}">{{ _('all zones...') }}</a></li>
-      </ul>
-    </div>
-    <div class="column-home-features">
-      <h3>{{ _('Developer Program') }}</h3>
-      <p>{{ _('More information coming soon.') }}</p>
+  <div class="home-features">
+    <div class="column-container">
+      <div class="column-home-features">
+        <h3>{{ _('Web Platform') }}</h3>
+        <ul>
+          <li><a href="{{ devmo_url('Web/Reference/API') }}">{{ _('Web APIs &amp; DOM') }}</a></li>
+          <li><a href="{{ devmo_url('Web/HTML') }}">{{ _('HTML') }}</a></li>
+          <li><a href="{{ devmo_url('Web/CSS') }}">{{ _('CSS') }}</a></li>
+          <li><a href="{{ devmo_url('Web/JavaScript') }}">{{ _('JavaScript') }}</a></li>
+          <li><a href="{{ devmo_url('Web') }}">{{ _('more...') }}</a></li>
+        </ul>
+      </div>
+      <div class="column-home-features">
+        <h3>{{ _('Zones') }}</h3>
+        <ul>
+        <li><a href="">{{ _('App Center') }}</a></li>
+        <li><a href="">{{ _('Firefox OS') }}</a></li>
+        <li><a href="">{{ _('Firefox Marketplace') }}</a></li>
+        <li><a href="">{{ _('Web Platform') }}</a></li>
+        <li><a href="">{{ _('all zones...') }}</a></li>
+        </ul>
+      </div>
+      <div class="column-home-features">
+        <h3>{{ _('Developer Tools') }}</h3>
+        <ul>
+        <li><a href="{{ devmo_url('Tools/Firefox_OS_Simulator') }}">{{ _('Firefox OS SImulator') }}</a></li>
+        <li><a href="{{ devmo_url('Tools/Page_Inspector') }}">{{ _('Page Inspector') }}</a></li>
+        <li><a href="{{ devmo_url('Tools/Debugger') }}">{{ _('JavaScript Debugger') }}</a></li>
+        <li><a href="{{ devmo_url('Tools/Web_Console') }}">{{ _('Web Console') }}</a></li>
+        <li><a href="{{ devmo_url('Tools') }}">{{ _('all zones...') }}</a></li>
+        </ul>
+      </div>
+      <div class="column-home-features">
+        <h3>{{ _('Developer Program') }}</h3>
+        <p>{{ _('More information coming soon.') }}</p>
+      </div>
     </div>
   </div>
-</div>
 
 </div></div>
 
@@ -86,7 +86,7 @@
 </div></div>
 
 <!-- hacks area -->
-<div class="column-container center home-hacks">
+<div class="home-hacks"><div class="column-container center">
   <div class="column-hacks">
     <h2>[logo] {{ _('Hacks Blog <a href="">read more at hacks.mozilla.org <i class="icon-arrow-right"></i></a>') }}</h2>
     {{ newsfeed(updates, section_headers=True) }}
@@ -99,7 +99,7 @@
       <p><span class="button">{{ _('Contribute to MDN') }}</span></p>
     </a></div>
   </div>
-</div>
+</div></div>
 
 <!-- demos and dev derby -->
 {% if demos %}
