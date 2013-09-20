@@ -9,6 +9,7 @@ from django.http import HttpResponseServerError
 from django.shortcuts import render
 
 import constance.config
+from waffle import flag_is_active
 from waffle.decorators import waffle_switch
 from waffle.models import Flag
 
@@ -21,9 +22,12 @@ from landing.forms import SubscriptionForm
 def home(request):
     """Home page."""
 
-    demos = Submission.objects.filter(id=constance.config.DEMOS_DEVDERBY_HOMEPAGE_FEATURED_DEMO)\
-                .exclude(hidden=True)\
-                .order_by('-modified').all()[:1]
+    if flag_is_active(request, 'redesign'):
+        demos = Submission.objects.exclude(hidden=True).order_by('-modified').all()[:5]
+    else:
+        demos = Submission.objects.filter(id=constance.config.DEMOS_DEVDERBY_HOMEPAGE_FEATURED_DEMO)\
+                    .exclude(hidden=True)\
+                    .order_by('-modified').all()[:1]
 
     updates = []
     for s in SECTION_USAGE:

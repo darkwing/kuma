@@ -1,4 +1,225 @@
+@import 'vars'
+@import 'mixins'
+@import 'grid'
+
 #home
 
   .main-nav-search
     display none
+
+   .home-callouts
+    background #4d4e53
+
+   main >.center
+    width auto
+    padding 0
+
+  /* masthead */
+  .home-masthead
+    padding first-content-top-padding 0
+    background #175c9f
+
+    h1
+      color #fff
+      margin-bottom 0 
+      width 60%
+      margin 0 auto
+
+      span
+        padding-left 20%
+        display block
+
+    .home-search-form
+      padding (grid-spacing * 1.5) 0
+
+      input
+        display block
+        width 60%
+        margin 0 auto
+        font-size larger-font-size
+
+  .home-features
+    &, a
+      color #fff
+
+    h3
+      font-weight bold
+
+    li
+      border-bottom 1px solid rgba(255, 255, 255, 0.1)
+      padding 4px 0
+
+    .column-home-features
+      @extend .column-strip
+
+  /* callouts */
+  .callout-apps
+    background-color #e66000
+
+  .callout-android
+    background-color #97c03d
+
+  .callout-firefoxos
+    background-color #0095dd
+
+  .column-callout 
+    @extend .column-4
+
+    a
+      font-size larger-font-size
+      color #fff
+      display block
+      padding 100px grid-spacing grid-spacing grid-spacing
+      position relative
+
+      &:before
+        content "\f061"
+        font-family "FontAwesome"
+        bottom grid-spacing
+        right grid-spacing
+        position absolute
+        font-size 24px
+
+  /* shared */
+  h2 a
+      font-style italic
+      font-size base-font-size
+      display inline-block
+      margin-left (grid-spacing * 2)
+
+  .entry-meta
+      font-size smaller-font-size
+      font-style italic
+
+  /* hacks */
+  .home-hacks
+    padding first-content-top-padding 0
+
+    .column-hacks
+      @extend .column-main
+
+    .column-involved
+      @extend .column-strip
+
+    li
+      padding-top grid-spacing
+      border-bottom 1px solid #ececec
+
+      &:last-child
+        border-bottom 0
+
+    h2
+      font-weight bold
+      margin-bottom 4px
+
+      a
+        text-decoration underline
+        compat-only(margin-left, 0)
+        compat-only(font-style, normal)
+        font-size base-font-size
+
+    .hacks
+      margin-bottom (grid-spacing / 2)
+
+    .home-involved-card
+      background #f4f7f8
+
+      a
+        color #fff
+        text-decoration none
+        padding grid-spacing
+        display block
+
+      .numbers
+        padding-bottom 40px
+        line-height 40px
+
+        .row1, .row2, .row3
+          display block
+
+      .number
+        font-size 30px
+        font-weight bold
+
+      h3
+        padding-bottom (grid-spacing / 2)
+        border-bottom 1px solid #e0e2e4
+        margin-bottom 110px
+        margin-right -gridspacing
+        font-weight bold
+        font-size larger-font-size
+
+      p
+        margin 0
+        padding 0
+        text-align center
+
+      .button
+        background-color #48ade4 !important
+        font-size smaller-font-size !important
+        color #fff !important
+        
+/* demos section */
+.home-demos
+  background light-background-color
+  padding first-content-top-padding 0
+
+  ul
+    @extend .clear
+    overflow-x auto
+    position relative
+
+  li
+    display block
+    text-align center
+    margin-right grid-spacing
+    float left
+    font-size smaller-font-size
+    font-style italic
+
+    img
+      border 6px solid #fff
+      display block
+      vendorize(box-shadow, 2px 2px 1px rgba(0 , 0, 0, .1))
+      margin-bottom 6px
+
+  .preview
+    text-transform uppercase
+    float right
+    margin-top -10px
+
+    span
+      display block
+
+
+/* contribute section */
+.home-contribute
+  padding first-content-top-padding 0
+
+  a
+    text-decoration underline
+
+  h3
+    font-size larger-font-size
+    font-weight bold
+    text-transform uppercase
+
+  li
+    border-bottom 1px solid #ececec
+    padding 4px 0
+
+    &:last-child
+      border-bottom 0
+
+  .home-contribute-recent
+    margin-top (grid-spacing / 2)
+
+
+/* right to left */
+#home.html-rtl
+    .column-callout
+      a
+        &:before
+          content "\f060"
+          right auto
+          left grid-spacing
