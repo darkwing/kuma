@@ -10,6 +10,9 @@
     background-image none
     background-color #175c9f
 
+    .logo
+      background url('/media/redesign/img/mdn_logo-wordmark-full_white.svg') 0 0 no-repeat #fff
+
   /* update main nav menu color */
   override-main-nav-color(#fff)
 
@@ -66,17 +69,19 @@
       @extend .column-strip
 
   /* callouts */
-  .callout-apps
-    background-color #e66000
-
-  .callout-android
-    background-color #97c03d
-
-  .callout-firefoxos
-    background-color #0095dd
 
   .column-callout 
     @extend .column-4
+    position relative
+
+    i
+      position absolute
+      top 0
+      display block
+      right 10%
+
+    span
+      padding-right 20px
 
     a
       font-size larger-font-size
@@ -84,6 +89,7 @@
       display block
       padding 100px grid-spacing grid-spacing grid-spacing
       position relative
+      overflow-x hidden
 
       &:before
         content "\f061"
@@ -92,6 +98,34 @@
         right grid-spacing
         position absolute
         font-size 24px
+        z-index 4
+
+    &.callout-apps
+      background #e66000
+
+      i
+        width 200px
+        height 130px
+        background url('/media/redesign/img/HTML5_Logo.svg') center -70px no-repeat
+        background-size cover
+
+    &.callout-android
+      background #97c03d
+
+      i
+        width 260px
+        height 140px
+        background url('/media/redesign/img/promo-phone.png') center -190px no-repeat
+        background-size cover
+
+    &.callout-firefoxos
+      background-color #0095dd
+
+      i
+        width 280px
+        height 150px
+        background url('/media/redesign/img/promo-fox.png') center -60px no-repeat
+        background-size cover
 
   /* shared */
   h2 a
@@ -226,6 +260,17 @@
   .home-contribute-recent
     margin-top (grid-spacing / 2)
 
+
+/* tablet */
+@media media-query-tablet
+  #home
+    .column-callout
+      a
+        font-size base-font-size
+
+      &.callout-android, &.callout-apps
+          i
+            right auto
 
 /* right to left */
 #home.html-rtl
