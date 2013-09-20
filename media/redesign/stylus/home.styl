@@ -3,13 +3,14 @@
 @import 'grid'
 
 #home
-  background-color #175c9f
+
+  &, #main-header
+    create-gradient-background(#3a6ab4)
 
   /* general structure adjustments */
   #main-header
-    background-image none
-    background-color #175c9f
-
+    border-bottom-color rgba(255, 255, 255, 0.2)
+    
     .logo
       background url('/media/redesign/img/mdn_logo-wordmark-full_white.svg') 0 0 no-repeat
 
@@ -166,6 +167,7 @@
       font-weight bold
       margin-bottom 4px
 
+    h2.entry-title
       a
         text-decoration underline
         compat-only(margin-left, 0)
