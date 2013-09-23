@@ -12,6 +12,7 @@ import constance.config
 from waffle import flag_is_active
 from waffle.decorators import waffle_switch
 from waffle.models import Flag
+from users.models import User
 
 from devmo import (SECTION_USAGE, SECTION_ADDONS, SECTION_APPS, SECTION_MOBILE,
                    SECTION_WEB, SECTION_MOZILLA, SECTION_HACKS)
@@ -35,6 +36,8 @@ def home(request):
 
     return render(request, 'landing/homepage.html',
                   {'demos': demos, 'updates': updates,
+                   'num_languages': len(settings.MDN_LANGUAGES),
+                   'num_users': len(User.objects.all()),
                     'current_challenge_tag_name': 
                     str(constance.config.DEMOS_DEVDERBY_CURRENT_CHALLENGE_TAG).strip()})
 
