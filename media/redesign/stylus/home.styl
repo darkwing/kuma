@@ -3,12 +3,11 @@
 @import 'grid'
 
 #home
-
-  &, #main-header
-    create-gradient-background(#3a6ab4)
+  create-home-gradient-background(#3a6ab4)
 
   /* general structure adjustments */
   #main-header
+    background none
     border-bottom-color rgba(255, 255, 255, 0.2)
     
     .logo
@@ -141,11 +140,52 @@
         background-size cover
 
   /* shared */
-  h2 a
+  h2, h3
+    > i
+      display inline-block
+      position relative
+      margin-left 0
+      background-image url('/media/redesign/img/mdn_blank-grey-document-color.svg') 
+
+  h2 
+    a
       font-style italic
       font-size base-font-size
+      font-weight normal
       display inline-block
       margin-left (grid-spacing * 2)
+
+    > i
+      width 72px 
+      height 62px 
+      color #6363ce
+      
+      &.blue
+        background-image url('/media/redesign/img/mdn_blank-blue-document-color.svg') 
+        color #fff
+
+      &[class^="icon-"]:before
+        margin 16px 0 0 22px
+
+  h3
+    @extend .clear
+
+    i
+      background-size cover
+      width 47px 
+      height 41px
+      color #007bc4
+      margin-right 10px !important
+      float left
+
+      &[class^="icon-"]:before
+        margin 9px 0 0 16px
+
+    &.zones span
+      padding-top 10px
+
+    span
+      float left
 
   .entry-meta
       font-size smaller-font-size
@@ -183,6 +223,8 @@
       margin-bottom (grid-spacing / 2)
 
     .home-involved-card
+      background url('/media/redesign/img/home-globe.svg') -90px 40px no-repeat #f4f7f8
+      background-size 600px
 
       a
         color #fff

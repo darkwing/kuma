@@ -34,7 +34,7 @@
   <div class="home-features">
     <div class="column-container">
       <div class="column-home-features">
-        <h3>{{ _('Web Platform') }}</h3>
+        <h3><i class="icon-file-text-alt"></i><span>{{ _('Web<br />Platform') }}</span></h3>
         <ul>
           <li><a href="{{ devmo_url('Web/Reference/API') }}">{{ _('Web APIs &amp; DOM') }}</a></li>
           <li><a href="{{ devmo_url('Web/HTML') }}">{{ _('HTML') }}</a></li>
@@ -44,7 +44,7 @@
         </ul>
       </div>
       <div class="column-home-features">
-        <h3>{{ _('Zones') }}</h3>
+        <h3 class="zones"><i class="icon-suitcase"></i><span>{{ _('Zones') }}</span></h3>
         <ul>
         <li><a href="">{{ _('App Center') }}</a></li>
         <li><a href="">{{ _('Firefox OS') }}</a></li>
@@ -54,7 +54,7 @@
         </ul>
       </div>
       <div class="column-home-features">
-        <h3>{{ _('Developer Tools') }}</h3>
+        <h3><i class="icon-wrench"></i><span>{{ _('Developer<br />Tools') }}</span></h3>
         <ul>
         <li><a href="{{ devmo_url('Tools/Firefox_OS_Simulator') }}">{{ _('Firefox OS SImulator') }}</a></li>
         <li><a href="{{ devmo_url('Tools/Page_Inspector') }}">{{ _('Page Inspector') }}</a></li>
@@ -64,7 +64,7 @@
         </ul>
       </div>
       <div class="column-home-features">
-        <h3>{{ _('Developer Program') }}</h3>
+        <h3><i class="icon-certificate"></i><span>{{ _('Developer<br />Program') }}</span></h3>
         <p>{{ _('More information coming soon.') }}</p>
       </div>
     </div>
@@ -88,7 +88,7 @@
 <!-- hacks area -->
 <div class="home-hacks"><div class="column-container center">
   <div class="column-hacks">
-    <h2>[logo] {{ _('Hacks Blog <a href="">read more at hacks.mozilla.org <i class="icon-arrow-right"></i></a>') }}</h2>
+    <h2><i class="icon-star"></i> {{ _('Hacks Blog <a href="">read more at hacks.mozilla.org <i class="icon-arrow-right"></i></a>') }}</h2>
     {{ newsfeed(updates, section_headers=True) }}
       
   </div>
@@ -112,7 +112,7 @@
   </div>
 {% endif %}
 
-<h2>{{ _('[image] See & submit demos') }} 
+<h2><i class="icon-magic blue"></i> {{ _('See & submit demos') }} 
   {% if not waffle.flag('derby_closed') %}
     <a href="{{ url('demos_devderby_landing') }}">{{ _('MDN Dev Derby <i class="icon-arrow-right"></i>') }}</a>
   {% else %}
@@ -130,7 +130,7 @@
 
 <!-- contributions section -->
 <div class="home-contribute"><div class="center">
-  <h2>[image] {{ _('How to contribute to MDN') }}</h2>
+  <h2><i class="icon-smile"></i> {{ _('How to contribute to MDN') }}</h2>
 
   <div class="column-container">
     <div class="column-half">

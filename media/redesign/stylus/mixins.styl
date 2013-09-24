@@ -65,6 +65,10 @@ create-gradient-background(color)
   background-repeat repeat
   background-color color
 
+create-home-gradient-background(color)
+  create-gradient-background(color)
+  background-image url('/media/redesign/img/header-background.png'), url('/media/redesign/img/blueprint.png')
+
 /* generates a cross-browser gradient */
 create-gradient(start-color, end-color, direction=false)
   if direction
