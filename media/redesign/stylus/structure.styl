@@ -1,6 +1,5 @@
 /* header */
 #main-header
-  create-gradient-background(header-background-color)
   @extend .clear
   
   border-color transparent
@@ -186,10 +185,7 @@ a.persona-button
     z-index 2
     cursor pointer
 
-    &::-webkit-input-placeholder
-      color text-color
-    &::-moz-input-placeholder
-      color text-color
+    set-placeholder-style(color, text-color)
 
   .search-trigger
     position absolute
@@ -205,6 +201,8 @@ a.persona-button
   compat-only(padding, 0)
 
 main
+  background #fff
+  
   > .center 
     padding-top first-content-top-padding
 
