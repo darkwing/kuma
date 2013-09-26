@@ -85,13 +85,14 @@
 
 <div class="wiki-main-content"><div class="center">
 
-  {% if not is_zone_root %}
     <div class="article-meta">
-      <!-- crumbs -->
-      {{ build_document_crumbs(document) }}
+      {% if not is_zone_root %}
+        <!-- crumbs -->
+        {{ build_document_crumbs(document) }}
 
-      <!-- action buttons -->
-      {{ get_document_buttons(document) }}
+        <!-- action buttons -->
+        {{ get_document_buttons(document) }}
+      {% endif %}
     </div>
 
     <!-- heading -->
@@ -110,7 +111,7 @@
             <li><a href="">Blah blah blah</a></li>
           </ol>
         </div>
-        <a href="" class="from-search-next only-icon"></a>
+        <a href="" class="from-search-next only-icon"><i class="icon-chevron-right"></i></a>
     {% endif %}
 
     <h1>{{ document.title }}</h1>
@@ -121,12 +122,11 @@
     </div>
     {% endif %}
   </div>
-  {% endif %}
 
   <!-- start the main content container -->
     <div id="wiki-column-container" class="{% if not show_right %}wiki-right-closed{% endif %} {% if not show_left %}wiki-left-closed{% endif %}">
 
-      {% if show_left %}
+      {% if show_left and not is_zone_root %}
       <!-- additional controls row; hidden unless needed -->
       <div id="wiki-controls" class="column-container column-container-reverse">
         <div class="column-strip">
