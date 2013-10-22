@@ -1283,19 +1283,25 @@ def preview_revision(request):
     """Create an HTML fragment preview of the posted wiki syntax."""
     wiki_content = request.POST.get('content', '')
     kumascript_errors = []
-    doc = None
+    doc = Document({ 'slug': 'Quick_Links', 'locale': 'en-US', 'full_path': 'en-US/Quick_Links' })
+    rev = Revision({ 'document': doc, 'content': wiki_content, 'slug': 'Quick_Links', 'full_path': 'en-US/Quick_Links', 'locale': 'en-US' })
+    
+    doc.current_revision = rev
+    
+    """
     if request.POST.get('doc_id', False):
         doc = Document.objects.get(id=request.POST.get('doc_id'))
-
+    """
+    
     if kumascript.should_use_rendered(doc, request.GET, html=wiki_content):
         wiki_content, kumascript_errors = kumascript.post(request,
                                                           wiki_content,
                                                           request.locale)
     # TODO: Get doc ID from JSON.
-    data = {'content': wiki_content, 'title': request.POST.get('title', ''),
+    data = {'document': doc, 'document_html': wiki_content, 'title': request.POST.get('title', ''),
             'kumascript_errors': kumascript_errors}
     #data.update(SHOWFOR_DATA)
-    return render(request, 'wiki/preview.html', data)
+    return render(request, 'wiki/document.html', data)
 
 
 @require_GET
