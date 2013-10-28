@@ -41,7 +41,7 @@
 
 {% set content_class = 'column-all' %}
 {% if show_left and show_right %}
-  {% set content_class = 'column-half' %}
+  {% set content_class = 'column-main' %}
 {% elif show_left or show_right %}
   {% set content_class = 'column-main' %}
 {% endif %}
@@ -149,9 +149,13 @@
       {% endif %}
 
       <!-- content row with three strips -->
-      <div class="column-container column-container-reverse">
+      <div class="column-container column-container-reverse column-all">
 
-        {% if show_right %}
+
+        <!-- CENTER AND RIGHT -->
+        <div class="column-container column-main column-container-reverse" style="background:pink;">
+
+         {% if show_right %}
           <!-- TOC, approvals, etc -->
           <div class="column-strip wiki-column" id="wiki-right">
           {% if toc_html %}
@@ -182,6 +186,7 @@
           </div>
         {% endif %}
 
+
         <!-- just the article content -->
         {% if not document.is_template %}
           {% set document_html_safe = document_html|section_hide(zone_subnav_section_id, quick_links_section_id)|safe %}
@@ -190,7 +195,7 @@
         {% endif %}
 
         <!-- center: main article content -->
-        <div id="wiki-content" class="{{ content_class }} wiki-column text-content">
+        <div id="wiki-content" class="{{ content_class }} wiki-column text-content" style="background:lightgreen;">
 
           {% if kumascript_errors %}
             {% include 'wiki/includes/kumascript_errors.html' %}
@@ -238,6 +243,18 @@
           {% endif %}
         </div>
 
+
+
+
+
+        </div>
+
+
+
+
+
+
+        <!-- LEFT -->
         {% if show_left %}
           <!-- quick links and zone subnav strip -->
           <div id="wiki-left" class="column-strip wiki-column">
@@ -265,7 +282,20 @@
             
           </div>
         {% endif %}
-      </div>
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>  <!-- ends "column-container-reverse" -->
+
+
     </div>
   </div>
 </div> <!-- ends "main-content" -->
