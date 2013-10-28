@@ -5,7 +5,7 @@
 .center {
   margin: 0 auto;
   position: relative;
-  max-width: 1220px;
+  max-width: max-width-default;
   add-center-spacing();
 }
 
@@ -84,7 +84,21 @@
   float: none;
 }
 
-/*  Tablet grid width */
+/* Small desktop widths */
+@media media-query-small-desktop {
+
+  .center {
+    max-width: max-width-small-desktop;
+  }
+
+  body {
+    background: pink !important; /* debug */
+  }
+}
+
+
+
+/* Tablet grid width */
 @media media-query-tablet {
 
   .column-container {
@@ -94,18 +108,6 @@
   }
 
   .center {
-    max-width: 1000px;
+    max-width: max-width-tablet;
   }
 }
-
-/* Mobile phone grid settings
-     Disabled for now as not required for launch
-
-@media media-query-mobile {
-
-  .center, .column-1, .column-2, .column-3, .column-4, .column-5, .column-6, .column-7, .column-8, .column-9, .column-10, .column-11 {
-    float:  none;
-    width: 99%;
-  }
-}
-*/
