@@ -18,8 +18,24 @@
   }
 }
 
-#nav-access {
-  width: 0;
+.access-nav {
+  position: absolute;
+  top: -500px;
+  left: 40%;
+
+  a {
+    display: block;
+    width: 200px;
+    text-align: center;
+    position: absolute;
+    background: #fff;
+    padding: grid-spacing;
+    font-size: larger;
+
+    &:focus {
+      top: 520px;
+    }
+  }
 }
 
 #main-nav {
