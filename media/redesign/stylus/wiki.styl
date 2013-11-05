@@ -475,14 +475,6 @@ div.bug > *:last-child, div.warning > *:last-child {
   }
 }
 
-#wiki-column-container.wiki-right-closed #wiki-content {
-  margin-right: 0;
-}
-
-#wiki-column-container.wiki-left-closed #wiki-content {
-  margin-left: 0;
-}
-
 /* wiki new and edit pages */
 .page-meta section, #article-head {
   compat-only(background, none);
@@ -682,7 +674,7 @@ span.cke_skin_kuma {
     }
   }
 
-  #wiki-column-container, #wiki-content, $wiki {
+  #wiki-column-container, #wiki-content {
     width: auto !important;
   }
 
@@ -699,6 +691,12 @@ span.cke_skin_kuma {
       margin-right: 0 !important;
     }
   }
+
+  /* odd special case 
+  .wiki-right-none.wiki-left-present #wiki-left {
+    float: right;
+  }
+  */
 }
 
 
