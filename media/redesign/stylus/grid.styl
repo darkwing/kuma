@@ -28,7 +28,8 @@
   }
 
   &.column-container-reverse {
-    bidi-value(margin-left, -1%, 0);
+    /* bidi-value(margin-left, -1%, 0); */
+    bidi-style(margin-left, -1%, margin-right, 0);
 
     {grid-column-selector} {
       bidi-value(float, right, left);
