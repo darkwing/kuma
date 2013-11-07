@@ -33,130 +33,6 @@
     padding: first-content-top-padding 0;
   }
 
-  /* masthead */
-  .home-masthead {
-
-    h1 {
-      color: #fff;
-      margin-bottom: 0;
-      margin: 0 auto;
-      width: 60%;
-
-      span {
-        padding-left: 20%;
-        display: block;
-      }
-    }
-
-    .home-search-form {
-      padding: (grid-spacing * 2) 0;
-
-      input {
-        @extend .big-search;
-        color: #fff;
-
-        set-placeholder-style(color, #fff);
-      }
-    }
-  }
-
-  .home-features {
-    &, a {
-      color: #fff;
-    }
-
-    a {
-      text-decoration: underline;
-    }
-
-    h3 {
-      @extend .larger;
-      font-weight: bold;
-      font-family: 'Open Sans Extra Bold', sans-serif;
-    }
-
-    li {
-      padding: 4px 0;
-    }
-
-    .column-home-features {
-      @extend .column-strip;
-    }
-  }
-
-  /* callouts */
-
-  .column-callout  {
-    @extend .column-4;
-    position: relative;
-
-    i {
-      position: absolute;
-      top: 0;
-      display: block;
-      right: 5%;
-    }
-
-    span {
-      padding-right: 20px;
-    }
-
-    a {
-      @extend .larger;
-      color: #fff;
-      display: block;
-      padding: 100px grid-spacing grid-spacing grid-spacing;
-      position: relative;
-      overflow-x: hidden;
-
-      &:before {
-        content: '\f061';
-        font-family: 'FontAwesome';
-        bottom: grid-spacing;
-        right: grid-spacing;
-        position: absolute;
-        font-size: 24px;
-        z-index: 4;
-      }
-    }
-
-    &.callout-apps {
-      background: #e66000;
-
-      i {
-        width: 200px;
-        height: 130px;
-        background: url(media-url-dir + 'HTML5_Logo.svg') center -70px no-repeat;
-      }
-    }
-
-    &.callout-android {
-      background: #97c03d;
-
-      i {
-        width: 260px;
-        height: 140px;
-        background: url(media-url-dir + 'promo-phone.png') center -190px no-repeat;
-      }
-    }
-
-    &.callout-firefoxos {
-      background-color: #0095dd;
-
-      i {
-        width: 320px;
-        height: 150px;
-        background: url(media-url-dir + 'promo-fox.png') center -60px no-repeat;
-      }
-    }
-    
-    &.callout-apps, &.callout-android, &.callout-firefoxos {
-      i {
-        background-size: cover;
-      }
-    }
-  }
-
   /* shared */
   h2, h3 {
     > i {
@@ -203,7 +79,7 @@
       width: 47px;
       height: 41px;
       color: #0095dd;
-      margin-right: 10px !important;
+      margin-left: 0 !important;
       float: left;
 
       &:before {
@@ -226,70 +102,139 @@
     @extend .smaller;
     font-style: italic;
   }
+}
 
-  /* hacks */
-  .home-hacks {
-    background: #fff;
+/* masthead */
+.home-masthead {
 
-    .column-hacks {
-      @extend .column-main;
+  h1 {
+    color: #fff;
+    margin: 0 auto;
+    width: 60%;
+
+    span {
+      bidi-style(padding-left, 20%, padding-right, 0);
+      display: block;
     }
+  }
 
-    .column-involved {
-      @extend .column-strip;
+  .home-search-form {
+    padding: (grid-spacing * 2) 0;
+
+    input {
+      big-search();
+      color: #fff;
+
+      set-placeholder-style(color, #fff);
     }
+  }
+}
 
-    li {
-      padding-top: grid-spacing;
-      border-bottom: 1px solid #ececec;
+.home-features {
+  &, a {
+    color: #fff !important;
+  }
 
-      &:last-child {
-        border-bottom: 0;
-      }
+  a {
+    text-decoration: underline;
+  }
+
+  h3 {
+    @extend .larger;
+    font-weight: bold;
+    font-family: 'Open Sans Extra Bold', sans-serif;
+  }
+
+  li {
+    padding: 4px 0;
+  }
+
+  .column-home-features {
+    @extend .column-strip;
+  }
+}
+
+/* callouts */
+.column-callout  {
+  @extend .column-4;
+  position: relative;
+
+  i {
+    bidi-style(right, 5%, left, auto);
+    position: absolute;
+    top: 0;
+    display: block;
+  }
+
+  span {
+    padding-right: 20px;
+  }
+
+  a {
+    @extend .larger;
+    color: #fff !important;
+    display: block;
+    padding: 100px grid-spacing grid-spacing grid-spacing;
+    position: relative;
+    overflow-x: hidden;
+
+    &:before {
+      bidi-style(content, '\f061', content, '\f060');
+      bidi-style(right, grid-spacing, left, auto);
+      font-family: 'FontAwesome';
+      bottom: grid-spacing;
+      position: absolute;
+      font-size: 24px;
+      z-index: 4;
     }
+  }
 
-    h2.entry-title {
-      letter-spacing: 0;
-      line-height: normal;
-      margin-bottom: 0;
-      font-size: base-font-size;
+  &.callout-apps {
+    background: #e66000;
 
-      a {
-        text-decoration: underline;
-        compat-only(margin-left, 0);
-        compat-only(font-style, normal);
-      }
+    i {
+      width: 200px;
+      height: 130px;
+      background: url(media-url-dir + 'HTML5_Logo.svg') center -70px no-repeat;
     }
+  }
 
-    .hacks {
-      margin-bottom: (grid-spacing / 2);
+  &.callout-android {
+    background: #97c03d;
+
+    i {
+      width: 260px;
+      height: 140px;
+      background: url(media-url-dir + 'promo-phone.png') center -190px no-repeat;
     }
+  }
 
-    .home-involved-card {
-      background: url(media-url-dir + 'home-globe.svg') -90px 40px no-repeat #f4f7f8;
-      background-size: 600px;
+  &.callout-firefoxos {
+    background-color: #0095dd;
 
-      a {
-        color: #fff;
-        text-decoration: none;
-        padding: grid-spacing;
-        display: block;
-      }
+    i {
+      width: 320px;
+      height: 150px;
+      background: url(media-url-dir + 'promo-fox.png') center -60px no-repeat;
+    }
+  }
 
-      .numbers {
-        padding-bottom: 40px;
-        line-height: 40px;
+  &.callout-apps, &.callout-android, &.callout-firefoxos {
+    i {
+      background-size: cover;
+    }
+  }
+}
 
-        .row1, .row2, .row3 {
-          display: block;
-        }
-      }
+/* hacks */
+.home-hacks {
+  background: #fff;
 
-      .number {
-        font-size: 30px;
-        font-weight: bold;
-      }
+  .column-hacks {
+    @extend .column-main;
+  }
 
+<<<<<<< HEAD
       h2 {
         @extend .larger;
         padding-bottom: (grid-spacing / 2);
@@ -298,18 +243,81 @@
         margin-right: -(grid-spacing);
         font-weight: bold;
       }
+=======
+  .column-involved {
+    @extend .column-strip;
+  }
+>>>>>>> master
 
-      p {
-        margin: 0;
-        padding: 0;
-        text-align: center;
-      }
+  li {
+    padding-top: grid-spacing;
+    border-bottom: 1px solid #ececec;
 
-      .button {
-        background-color: #48ade4 !important;
-        font-size: smaller-font-size !important;
-        color: #fff !important;
+    &:last-child {
+      border-bottom: 0;
+    }
+  }
+
+  h2.entry-title {
+    letter-spacing: 0;
+    line-height: normal;
+    margin-bottom: 0;
+    font-size: base-font-size;
+
+    a {
+      text-decoration: underline;
+      compat-only(margin-left, 0);
+      compat-only(font-style, normal);
+    }
+  }
+
+  .hacks {
+    margin-bottom: (grid-spacing / 2);
+  }
+
+  .home-involved-card {
+    background: url(media-url-dir + 'home-globe.png') -90px 40px no-repeat #f4f7f8;
+
+    a {
+      color: #fff;
+      text-decoration: none;
+      padding: grid-spacing;
+      display: block;
+    }
+
+    .numbers {
+      padding-bottom: 40px;
+      line-height: 40px;
+
+      .row1, .row2, .row3 {
+        display: block;
       }
+    }
+
+    .number {
+      font-size: 30px;
+      font-weight: bold;
+    }
+
+    h3 {
+      @extend .larger;
+      padding-bottom: (grid-spacing / 2);
+      border-bottom: 1px solid #e0e2e4;
+      margin-bottom: 110px;
+      bidi-style(margin-right, -(grid-spacing), margin-left, 0);
+      font-weight: bold;
+    }
+
+    p {
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+
+    .button {
+      background-color: #48ade4 !important;
+      font-size: smaller-font-size !important;
+      color: #fff !important;
     }
   }
 }
@@ -442,44 +450,27 @@
   }
 }
 
+
 /* right to left */
 #home.html-rtl {
-
-    .home-masthead {
-      h1 {
-        span {
-          padding-right: 20%;
-          padding-left: 0;
-        }
-      }
-    }
-
-  .column-callout {
-    a {
-      &:before {
-        content: '\f060';
-        right: auto;
-        left: grid-spacing;
-      }
-    }
-    
-    i {
-      right: auto;
-      left: 5%;
-    }
-  }
 
   h2 {
     > selector-icon:before {
       margin-right: 22px;
     }
+
+    a { /* this can be bidi-'d when we can accommodate for body */
+      margin-right: (grid-spacing * 2);
+      margin-left: 0;
+    }
+
   }
 
   h3 {
     i, span {
       float: right;
     }
-    
+
     {selector-icon} {
       compat-only(margin-right, 0);
       compat-only(margin-left, 10px);
@@ -488,10 +479,5 @@
 
   i.icon-arrow-right:before {
     content: '\f060';
-  }
-
-  .home-hacks .home-involved-card h3 {
-    margin-right: 0;
-    margin-left: -20px;
   }
 }

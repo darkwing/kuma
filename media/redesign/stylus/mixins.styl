@@ -172,6 +172,56 @@ use-white-logo() {
   }
 }
 
+/* Allows setting of a property for LTR and RTL without having to deal with duplicating and maintaining selectors 
+
+    example:   bidi-style(left, 20px, right, auto)
+*/
+bidi-style(ltr-prop, value, inverse-prop, inverse-value, make-important = false) {
+  if make-important {
+    make-important = unquote('!important');
+  } else {
+    make-important = unquote(';');
+  }
+
+  {ltr-prop}: value make-important;
+
+  .html-rtl & {
+    {inverse-prop}: value make-important;
+    {ltr-prop}: inverse-value make-important;
+  }
+}
+
+bidi-value(prop, ltr, rtl, make-important = false) {
+  bidi-style(prop, ltr, prop, rtl, make-important);
+}
+
+/*
+  MIXINS LIKE CLASSES
+
+  These are not dynamic but serve as mixins so that styles wont be repeated throughout files
+*/
+heading-1() {
+  font-size: (content-block-margin * 2);
+  letter-spacing: -2px;
+}
+
+heading-2() {
+  font-size: 30px;
+  letter-spacing: -1px;
+}
+
+big-search() {
+  @extend .larger;
+  display: block;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.2);
+  border: 0;
+  border-radius: 3px;
+  font-family: 'Open Sans Light', sans-serif;
+  letter-spacing: -1px;
+  width: 60%;
+}
+
 
 /*
   CLASSES TO BE EXTENDED BY OTHER CLASSES
@@ -237,20 +287,6 @@ use-white-logo() {
   cursor: default;
 }
 
-.reset-font {
-  font-family: site-font-family;
-}
-
-.heading-1 {
-  font-size: (content-block-margin * 2);
-  letter-spacing: -2px;
-}
-
-.heading-2 {
-  font-size: 30px;
-  letter-spacing: -1px;
-}
-
 .button {
   text-decoration: none;
   display: inline-block;
@@ -267,8 +303,9 @@ use-white-logo() {
 
   &.only-icon {
     {selector-icon} {
-      margin-left: 0;
-      margin-top: -1px;
+      margin-left: 0 !important;
+      margin-right: 0 !important;
+      margin-top: -1px !important;
     }
 
     span {
@@ -299,16 +336,4 @@ use-white-logo() {
     vendorize(box-shadow, none);
     compat-important(background-color, transparent);
   }
-}
-
-.big-search {
-  @extend .larger;
-  display: block;
-  margin: 0 auto;
-  background: rgba(255, 255, 255, 0.2);
-  border: 0;
-  border-radius: 3px;
-  font-family: 'Open Sans Light', sans-serif;
-  letter-spacing: -1px;
-  width: 60%;
 }
