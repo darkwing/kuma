@@ -688,12 +688,6 @@ MINIFY_BUNDLES = {
             'js/init.js',
             'js/gsearch.js',
 
-            # Home Page
-            # cycle and slideshow only needed on the home page (or any page
-            # featuring the slide show widget).
-            'js/libs/jquery.cycle.js',
-            'js/libs/slideshow.js',
-
             # Used only on pages with video popups
             'js/libs/video-player.js',
         ),
