@@ -683,8 +683,6 @@ MINIFY_BUNDLES = {
     },
     'js': {
         'mdn': (
-            'js/libs/jquery-1.9.1.js',
-            'js/jquery-upgrade-compat.js',
             'js/init.js',
             'js/gsearch.js',
 
@@ -696,6 +694,10 @@ MINIFY_BUNDLES = {
 
             # Used only on pages with video popups
             'js/libs/video-player.js',
+        ),
+        'jquery': (
+            'js/libs/jquery-1.9.1.js',
+            'js/jquery-upgrade-compat.js',
         ),
         'popup': (
             'js/libs/jquery-1.9.1.js',

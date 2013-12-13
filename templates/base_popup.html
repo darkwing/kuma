@@ -37,6 +37,8 @@
 <script src="{{ url('jsi18n') }}build:{{ BUILD_ID_JS }}"></script>
 
 {% block site_js %}
+
+{{ js('jquery') }}
 {{ js('popup') }}
 <script src="//www.google.com/jsapi" type="text/javascript"></script>
 <script type="text/javascript">
