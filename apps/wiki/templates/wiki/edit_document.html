@@ -127,6 +127,10 @@
         </header>
 
         {% if revision_form %}
+            <p class="guide-links">
+              <a class="button" target="_blank" href="{{ devmo_url('Project:MDN/Contributing/Editor_guide') }}">Editor Guide</a>
+              <a class="button" target="_blank" href="{{ devmo_url('Project:MDN/Style_guide') }}">Style Guide</a>
+            </p>
             {% if document.is_template %}
               {{ revision_form.content | safe }}
               <div id="ace_content"></div>
