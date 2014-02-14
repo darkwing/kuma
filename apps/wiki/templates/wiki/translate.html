@@ -117,13 +117,10 @@
 
           <article class="localized">
             <header>
+              {% include 'wiki/includes/guide_links.html' %}
               <h3>{{ _('{locale} translation:')|f(locale=language) }}</h3>
-              <p class="guide-links">
-                <a class="button" target="_blank" href="{{ devmo_url('Project:MDN/Contributing/Editor_guide') }}">Editor Guide</a>
-                <a class="button" target="_blank" href="{{ devmo_url('Project:MDN/Style_guide') }}">Style Guide</a>
-              </p>
             </header>
-            <div class="ckeditor-container">
+            <div class="ckeditor-container editor-container">
               {{ content_editor(revision_form.content) }}
             </div>
           </article>

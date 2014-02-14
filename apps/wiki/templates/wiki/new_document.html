@@ -47,15 +47,13 @@
 
       </header>
 
-      <p class="guide-links">
-        <a class="button" target="_blank" href="{{ devmo_url('Project:MDN/Contributing/Editor_guide') }}">Editor Guide</a>
-        <a class="button" target="_blank" href="{{ devmo_url('Project:MDN/Style_guide') }}">Style Guide</a>
-      </p>
+      {% include 'wiki/includes/guide_links.html' %}
+
       {% if is_template %}
         {{ revision_form.content|safe }}
-        <div id="ace_content"></div>
+        <div id="ace_content" class="editor-container"></div>
       {% else %}
-        <div class="ckeditor-container">
+        <div class="ckeditor-container editor-container">
           {{ revision_form.content|safe }}
         </div>
       {% endif %}
