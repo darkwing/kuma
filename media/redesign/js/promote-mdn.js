@@ -5,6 +5,14 @@ function PromoteMDNLinks(userSettings) {
         return;
     }
 
+    var defaults = {
+        searchElements: ['p', 'div', 'span'],
+        trackingString: '?utm_source=js%20snippet&utm_medium=content%20link&utm_campaign=promote%20mdn',
+        maxLinks: 3,
+        linkClass: '',
+        extraLinks: {}
+    };
+
     var dataset = {
         'JavaScript': 'https://developer.mozilla.org/docs/JavaScript',
         'JS Reference': 'https://developer.mozilla.org/docs/JavaScript',
@@ -86,20 +94,14 @@ function PromoteMDNLinks(userSettings) {
         'Mozilla': 'https://www.mozilla.org/'
     };
 
-    var options = {
-        includeElems: ['p', 'div', 'span'],
-        trackingString: '?utm_source=js%20snippet&utm_medium=content%20link&utm_campaign=promote%20mdn',
-        maxLinks: 3,
-        linkClass: ''
-    };
-
-    options = extend({}, options, userSettings || {});
-    dataset = extend({}, dataset, options.extraLinks || {})
+    options = extend(defaults, userSettings || {});
+    dataset = extend(dataset, options.extraLinks);
 
     var replaceCount = 0;
-    var re = new RegExp(/<a[^>]*>(.*?)<\/a>/);
+    var linkRegex = /<a[^>]*>(.*?)<\/a>/g;
+    var re = new RegExp(linkRegex);
 
-    var elements = document.querySelectorAll(options.includeElems.join(', '));
+    var elements = document.querySelectorAll(options.searchElements.join(', '));
     forEach(elements, function(o){
         var text = o.innerHTML;
         var placeholder;
@@ -107,10 +109,9 @@ function PromoteMDNLinks(userSettings) {
         var anchors_existing = [];
         var anchors_new = [];
 
-        if (text.match(/<a[^>]*>(.*?)<\/a>/g) && text.match(/<a[^>]*>(.*?)<\/a>/g).length) {
-            var anchorCount = text.match(/<a[^>]*>(.*?)<\/a>/g).length;
-
-            for (var i = 0; i < anchorCount; i++) {
+        var match = text.match(linkRegex);
+        if (match && match.length) {
+            for(var i = 0; i < match.length; i++) {
                 var anchor = re.exec(text);
                 placeholder = '{_m$d$n_repl$ace_' + placeholderIndex + '_}';
                 anchors_existing[placeholder] = anchor[0];
@@ -120,10 +121,10 @@ function PromoteMDNLinks(userSettings) {
         }
 
         // text is now stripped of all hyperlinks
-        for (var keyword in dataset) {
+        for(var keyword in dataset) {
             var keywordRegex = new RegExp(' ' + keyword + ' ', 'i');
 
-            if (replaceCount <= options.maxLinks) {
+            if (replaceCount < options.maxLinks) {
                 if (text.match(keywordRegex)) {
                     var exactWord = keywordRegex.exec(text);
                     exactWord = exactWord[0].trim();
@@ -142,11 +143,11 @@ function PromoteMDNLinks(userSettings) {
         }
 
         // Now let's replace placeholders with actual anchor tags, pre-existed ones and new ones.
-        for (var l in anchors_existing) {
+        for(var l in anchors_existing) {
             text = text.replace(l, anchors_existing[l]);
         }
 
-        for (var l in anchors_new) {
+        for(var l in anchors_new) {
             text = text.replace(l, ' ' + anchors_new[l] + ' ');
         }
 
@@ -158,16 +159,13 @@ function PromoteMDNLinks(userSettings) {
             Array.prototype.forEach.call(arr, callback);
         }
         else { // Shim for older browsers that doesn't have array.forEach
-            var len = arr.length >>> 0;
-
             if (typeof callback !== 'function') {
                 throw new TypeError();
             }
-
+            
+            var len = arr.length >>> 0;
             var thisArg = arguments.length >= 2 ? arguments[1] : void 0;
-
-            for (var i = 0; i < len; i++)
-            {
+            for(var i = 0; i < len; i++) {
                 if (i in arr) {
                     callback.call(thisArg, arr[i], i, arr);
                 }
@@ -175,14 +173,14 @@ function PromoteMDNLinks(userSettings) {
         }
     }
 
-    function extend (out) {
+    function extend(out) {
         out = out || {};
 
-        for (var i = 1; i < arguments.length; i++) {
+        for(var i = 1; i < arguments.length; i++) {
             if (!arguments[i])
                 continue;
 
-            for (var key in arguments[i]) {
+            for(var key in arguments[i]) {
                 if (arguments[i].hasOwnProperty(key))
                     out[key] = arguments[i][key];
             }
@@ -191,4 +189,3 @@ function PromoteMDNLinks(userSettings) {
         return out;
     };
 };
-
