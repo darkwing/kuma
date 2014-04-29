@@ -54,14 +54,14 @@
       <div class="search-wrapper" data-ft-text="{{ _("<h2>Welcome to the new way to search MDN!</h2><p>Search as usual, or filter your search by clicking in the arrow (<i class='icon-caret-down' aria-hidden='true'></i>) to show the filters menu.</p><p>Filtering also works by typing shortcuts into the search field (shortcut examples #int, #JS, #CSS).") }}</p>">
         <div class="filters"></div>
         <label for="search-q-s" class="offscreen">{{ _('Search') }}</label>
-        <input type="search" id="search-q-s" name="q" autocomplete="off" placeholder="{{ _('Search the docs') }}" size="15" />
+        <input type="search" id="search-q-s" name="q" autocomplete="off" placeholder="{{ _('Search the docs') }}" value="{{ query }}" size="15" />
         <button type="submit" class="offscreen">{{ _('Search') }}</button>
-        <button type="button "class="show-topics"><i class="icon-caret-down" aria-hidden="true"></i></button>
+        <button type="button" class="show-filters"><i class="icon-caret-down" aria-hidden="true"></i></button>
       </div>
       <ul class="suggestions" data-hidden="true" style="display:none"></ul>
     {% else %}
       <label for="search-q" class="offscreen">{{ _('Search') }}</label>
-      <input type="search" name="q" id="search-q" placeholder="{{ _('Search the docs') }}" value="{{ query }}" {% if not query %}autofocus{% endif %} />
+      <input type="search" id="search-q" name="q" placeholder="{{ _('Search the docs') }}" value="{{ query }}" {% if not query %}autofocus{% endif %} />
       <button type="submit" class="offscreen">{{ _('Search') }}</button>
     {% endif %}
     </div>
@@ -173,7 +173,7 @@
               {% if filter.count == 0 %}
               <label class="inactive">
                 <i aria-hidden="true" class="icon-check-empty"></i>
-                <input type="checkbox" class="offscreen" name="{{ filter_group.slug }}" value="{{ filter.slug }}" disabled="disabled">{{ filter.name }}
+                <input type="checkbox" class="offscreen" id="filter-checkbox-{{ filter.slug }}" name="{{ filter_group.slug }}" value="{{ filter.slug }}" disabled="disabled">{{ filter.name }}
                 <span class="offscreen"> includes</span>
                 <span class="filter-count">{{ filter.count }}
                   <span class="offscreen">documents</span>
@@ -182,7 +182,7 @@
               {% elif filter.slug in selected_filters %}
               <label class="checked">
                 <i aria-hidden="true" class="icon-check"></i>
-                <input type="checkbox" checked="checked" class="offscreen" name="{{ filter_group.slug }}" value="{{ filter.slug }}">
+                <input type="checkbox" checked="checked" class="offscreen" id="filter-checkbox-{{ filter.slug }}" name="{{ filter_group.slug }}" value="{{ filter.slug }}">
                 <span class="filter-name">{{ filter.name }}</span>
                 <span class="offscreen">includes </span>
                 <span class="filter-count">{{ filter.count }}
@@ -192,7 +192,7 @@
               {% else %}
               <label>
                 <i aria-hidden="true" class="icon-check-empty"></i>
-                <input type="checkbox" class="offscreen" name="{{ filter_group.slug }}" value="{{ filter.slug }}">
+                <input type="checkbox" class="offscreen" id="filter-checkbox-{{ filter.slug }}" name="{{ filter_group.slug }}" value="{{ filter.slug }}">
                 <span class="filter-name">{{ filter.name }}</span>
                 <span class="offscreen">includes </span>
                   <span class="filter-count">{{ filter.count }} <span class="offscreen">documents</span>
@@ -211,13 +211,6 @@
 {% endblock %}
 
 {% block js %}
-  {% if waffle.flag('search_doc_navigator') and count and search_ref %}
-  <script>
-  $(document).ready(function() {
-    $('.result-list-item h4 a').mozSearchStore('{{ search_ref }}');
-  });
-  </script>
-  {% endif %}
   {% if waffle.flag('search_suggestions') %}
   {{ js('search-suggestions') }}
   {% endif %}

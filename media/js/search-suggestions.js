@@ -2,39 +2,43 @@
     'use strict';
 
     var filtersData = win.mdn.searchFilters || [];
-
+    var activeFilters = [];
     var $search = $('.search-wrapper');
-    var $searchFilters = $search.find('.filters');
+    var $selectedsearchFilters = $search.find('.filters');
     var $searchInput = $search.find('input');
-    var $searchForm = $search.find('form');
-    var $suggestions = $('form.search .suggestions');
-    var BASE_SEARCH_URL = $('form.search').attr('action');
+    var $searchForm = $('#search-form');
+    var $suggestions = $searchForm.find('.suggestions');
+    var $availableSearchFilters = $('.search-results-filters');
 
     var previousValue = $searchInput.val();
     var populated;
 
     var fnSuggestions = {
-      prepareInput: function(){
+      prepareInput: function() {
           $searchInput.attr('size', '15');
+          var self = this;
+          $availableSearchFilters.find('input:checked').each(function() {
+            self.addFilter('#' + $(this).val());
+          })
       },
-      parse: function(s){
+      parse: function(s) {
           var matches = s.match(/^(#\S+)\s+|\s(#\S+)\s+/);
           return matches ? matches[1] || matches[2] : matches;
       },
-      open: function(){
-        $suggestions.attr('data-hidden', 'false');
+      open: function() {
+        $suggestions.data('hidden', 'false');
         $suggestions.slideDown();
       },
-      close: function(){
-        $suggestions.attr('data-hidden', 'true');
+      close: function() {
+        $suggestions.data('hidden', 'true');
         $suggestions.slideUp();
       },
-      populate: function(){
-        if($suggestions.attr('data-hidden') == 'false') {
+      populate: function() {
+        if ($suggestions.data('hidden') == 'false') {
             var fs = $searchInput.val().match(/#(\S+)/) || [];
-            this.recoverTopics(fs[1] || '');
+            this.recoverFilters(fs[1] || '');
 
-            if(!populated) {
+            if (!populated) {
                 // Add keyboard navigation for the filters
                 $('.search').mozKeyboardNav({
                     alwaysCollectItems: true
@@ -42,38 +46,41 @@
             }
         }
       },
-      addFilter:function(f){ // f is a topic with the # ('#javascript', '#advanced')
-        var filter = $('<span></span>')
-            .addClass('topic button')
-            .attr('data-topic', f.slice('#'.length))
-            .text(f)
-            .appendTo($searchFilters);
-
+      addFilter: function(filter) { // filter with the #
+        var filterEl = $('<span></span>')
+            .addClass('filter button')
+            .text(filter)
+            .appendTo($selectedsearchFilters);
+        var filterSlug = filter.slice('#'.length)
         $('<button></button>')
             .addClass('close')
             .attr('type', 'button')
             .html('<i aria-hidden="true" class="icon-remove"></i>')
-            .on('click', function(){
-                $(filter).remove();
+            .on('click', function() {
+                $(filterEl).remove();
             })
-            .appendTo(filter);
+            .appendTo(filterEl);
+        activeFilters.push(filterSlug);
       },
-      parseAndAddFilters: function(){
+      removeFilter: function(filter) {
+        activeFilters.pop(filterSlug);
+      },
+      parseAndAddFilters: function() {
           var toParse = $searchInput.val();
           var filter = true;
           var filters = [];
           var self = this;
-          while(filter){
+          while (filter) {
               filter = self.parse(toParse);
-              if(filter){
+              if (filter) {
                   filters.push(filter);
                   toParse = toParse.replace(filter, '').trim();
               }
           }
 
-          if(filters.length >= 1){
-              filters.forEach(function(entry){
-                self.addFilter(entry)
+          if (filters.length >= 1) {
+              filters.forEach(function(entry) {
+                  self.addFilter(entry)
               });
               self.close();
           }
@@ -90,42 +97,41 @@
           }
           return valueResult;
       },
-      recoverTopics: function(f){
+      recoverFilters: function(f) {
           // clean suggestion div
           $suggestions.empty();
           var self = this;
-          $.each(filtersData, function(index, group){
+          $.each(filtersData, function(index, group) {
               var title = $('<strong>').text(group.name);
               var $ul = $('<ul></ul>');
               var show = false;
 
-              $.each(group.filters, function(index, filter){
+              $.each(group.filters, function(index, filter) {
                   var slugNorm = filter.slug.toLowerCase();
                   var nameNorm = self.removeAccents(filter.name.toLowerCase());
-                  if (!f || slugNorm.indexOf(self.removeAccents(f.toLowerCase())) != -1 || nameNorm.indexOf(self.removeAccents(f.toLowerCase())) != -1) {
-                      var $li = $('<li></li>')
-                                  .attr('data-slug', filter.slug)
-                                  .addClass('sug');
-                      var $a = $('<a></a>')
-                                  .attr('class', 'search-ss')
-                                  .attr('href', '#')
-                                  .html(filter.name + ' <span>#' + filter.slug + '</span>')
-                                  .appendTo($li)
-                                  .on('click', function(e){
-                                      e.preventDefault();
-                                      self.addFilter('#'+filter.slug);
-                                      $searchInput.val($searchInput.val().replace('#'+f, ''));
-                                      previousValue = $searchInput.val();
-                                      $searchInput.attr('size', $searchInput.val().length < 15 ? 15 : $searchInput.val().length);
-                                      $suggestions.attr('data-hidden', 'true');
-                                      $suggestions.hide();
-                                      $searchInput.focus();
-                                  });
+                  if (!f ||
+                      slugNorm.indexOf(self.removeAccents(f.toLowerCase())) != -1 ||
+                      nameNorm.indexOf(self.removeAccents(f.toLowerCase())) != -1) {
+                      var $li = $('<li></li>').data('slug', filter.slug);
+                      var $a = $('<a></a>').addClass('search-suggestion')
+                                           .attr('href', '#')
+                                           .html(filter.name + ' <span>#' + filter.slug + '</span>')
+                                           .appendTo($li)
+                                           .on('click', function(e) {
+                                                e.preventDefault();
+                                                self.addFilter('#' + filter.slug);
+                                                $searchInput.val($searchInput.val().replace('#' + f, ''));
+                                                previousValue = $searchInput.val();
+                                                $searchInput.attr('size', $searchInput.val().length < 15 ? 15 : $searchInput.val().length);
+                                                $suggestions.data('hidden', 'true');
+                                                $suggestions.hide();
+                                                $searchInput.focus();
+                                           });
                       $li.appendTo($ul);
                       show = true;
                   }
               });
-              if(show){
+              if (show) {
                   $suggestions.append(title);
                   $suggestions.append($ul);
               }
@@ -133,12 +139,12 @@
       }
     };
 
-    $search.on('click', function(){
+    $search.on('click', function() {
         $searchInput.focus();
     });
 
     // Open Q : other events than input?
-    $searchInput.on('input', function(e){
+    $searchInput.on('input', function(e) {
 
         $searchInput.attr('size', $searchInput.val().length < 15 ? 15 : $searchInput.val().length);
         fnSuggestions.parseAndAddFilters();
@@ -146,13 +152,13 @@
         // find out if there is a difference of exactly one # between input.value and previousValue
         // Current algorithm is very simple. Must be improved in the future
         // Currently consider only the last character
-        if($searchInput.val().length - previousValue.length === 1 &&
-           $searchInput.val()[$searchInput.val().length -1] === '#') {
+        if ($searchInput.val().length - previousValue.length === 1 &&
+            $searchInput.val()[$searchInput.val().length -1] === '#') {
             fnSuggestions.open();
         }
 
-        if(previousValue.length - $searchInput.val().length === 1 &&
-           previousValue[previousValue.length -1] === '#') {
+        if (previousValue.length - $searchInput.val().length === 1 &&
+            previousValue[previousValue.length -1] === '#') {
             fnSuggestions.close();
         }
 
@@ -161,27 +167,27 @@
         previousValue = $searchInput.val();
     });
 
-    $('.show-topics').on('click', function(e){
+    $('.show-filters').on('click', function(e) {
         e.preventDefault();
-        if($suggestions.attr('data-hidden') == 'false') {
+        if ($suggestions.data('hidden') == 'false') {
           fnSuggestions.close();
-        }else{
+        } else {
           fnSuggestions.open();
           fnSuggestions.populate();
         }
     })
 
-    $('form.search').on('submit', function(e){
-        e.preventDefault();
-
-        var topics = $.makeArray($('form.search .topic')).map(function(e){
-            return encodeURIComponent($(e).attr('data-topic'));
-        });
-        var topicsString = topics.map(function(t){ return 'topic='+t; }).join('&');
-        var searchQuery = encodeURIComponent($searchInput.val());
-
-        // Redirects to search
-        location.href = BASE_SEARCH_URL + '?' + 'q=' + searchQuery + '&' + topicsString;
+    $searchForm.on('submit', function(e) {
+        console.log(activeFilters);
+        $availableSearchFilters.find('input').each(function() {
+          if ($(this).val() in activeFilters) {
+            if (!$(this).prop('checked')) {
+                $(this).prop('checked', true);
+            };
+          } else if ($(this).prop('checked')) {
+              $(this).prop('checked', false);
+          }
+        })
     });
 
     fnSuggestions.prepareInput();
@@ -192,7 +198,7 @@
             .addClass('close')
             .attr('type', 'button')
             .html('<i aria-hidden="true" class="icon-remove"></i>')
-            .on('click', function(){
+            .on('click', function() {
                 $firstTimePop.remove();
             })
         var $firstTimePop = $('<div></div>')
