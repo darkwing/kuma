@@ -804,16 +804,6 @@ class TranslateTests(TestCaseBase):
                                        urlquote(translate_uri))
         ok_(expected_url in response['Location'])
 
-    def test_translate_GET_with_perm(self):
-        """HTTP GET to translate URL renders the form."""
-        response = self.client.get(self._translate_uri())
-        eq_(200, response.status_code)
-        doc = pq(response.content)
-        eq_(1, len(doc('form textarea[name="content"]')))
-        # initial translation should include slug input
-        eq_(1, len(doc('form input[name="slug"]')))
-        assert (u'Espa' in doc('div.change-locale').text())
-
     def test_translate_disallow(self):
         """HTTP GET to translate URL returns 400 when not localizable."""
         self.d.is_localizable = False
