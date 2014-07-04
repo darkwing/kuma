@@ -251,7 +251,7 @@
             dataType: 'script',
             cache: true,
             success: function() {
-                $('<link href="//mozorg.cdn.mozilla.net/media/css/tabzilla-min.css" type="text/css" rel="stylesheet" />').appendTo(doc.head);
+                $(doc.head).prepend($('<link href="//mozorg.cdn.mozilla.net/media/css/tabzilla-min.css" type="text/css" rel="stylesheet" />'));
                 $tabzilla.removeClass('hidden');
             }
         });
