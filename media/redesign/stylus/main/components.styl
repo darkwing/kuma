@@ -100,35 +100,81 @@
     reverse-link-decoration();
 }
 
-.notifier {
-        background: rgba(252, 246, 212, 1);
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        height: 25px;
-        left: 35%;
-        line-height: 1.6;
-        opacity: 0.6;
-        padding: 2px 4px;
-        position: fixed;
-        text-align: center;
-        top: -34px;
-        width: 30%;
-        z-index: 100;
-        transition: background 0.3s ease-out, top 0.3s ease-out 1.5s, opacity 0.3s ease-out 1.5s;
+.notification {
+    padding: 10px;
+    border-width: 2px;
+    border-style: solid;
+    border-radius: 4px;
+    position: relative;
 
-        &.show-notifier {
-            opacity: 1;
-            top: 0;
-            transition: top 0.3s ease-in, opacity 0.3s ease-in;
+    &.closed {
+        display: none;
+    }
+
+    &.clickable {
+        cursor: pointer;
+    }
+
+    /* theme: default */
+    background: rgba(#c7ccce, 0.5);
+    border-color: #c7ccce;
+
+    /* theme: fail */
+    &.negative {
+        background: rgba(#ea3b28, 0.5);
+        border-color: #ea3b28;
+        color: #fff;
+
+        button.close {
+            color: @border-color;
         }
+    }
 
-        &.success {
-            color: #fff;
-            background: rgba(141, 180, 86, 1);
+    /* theme: warning */
+    &.warn {
+        background: rgba(#ffcb00, 0.5);
+        border-color: #ffcb00;
+
+        button.close {
+            color: @border-color;
         }
+    }
 
-        &.fail {
-            color:#fff;
-            background: rgba(193, 56, 50, 0.85);
+    /* theme: success */
+    &.positive {
+        background: rgba(#70a300, 0.5);
+        border-color: #70a300;
+        color: #fff;
+
+        button.close {
+            color: @border-color;
         }
+    }
 
+    button.close {
+        position: absolute;
+        top: 0;
+        right: 6px;
+        display: block;
+        color: @border-color;
+        padding: 2px;
+        background: transparent;
+        box-shadow: none;
+
+        i {
+            font-size: 12px;
+        }
+    }
+}
+
+.notification-tray {
+    width: 300px;
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 999999;
+
+    .notification {
+        margin-bottom: 8px;
+    }
 }
