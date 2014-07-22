@@ -361,6 +361,7 @@
         var defaults = {
             classes: '', // Classes to apply to the individual notification
             closable: false, // Should the "x" icon appear
+            icon: true, // Should the icon appear when a state is given
             duration: 3000, // How long should the item be shown?  '0' means the message needs to be removed manually or via the handle.
             url: null, // Should clicking the item go anywhere?
             onclick: null, // What should happen if they click on the notification?
@@ -382,8 +383,8 @@
 
         // Enacts options upon an item, used by both discover and growl
         function applyOptions($item, options) {
-            // Wrap the text in a span
-            $item.html('<span class="notification-message">' + $item.html() + '</span>');
+            // Wrap the text in a div
+            $item.html('<div class="notification-message">' + $item.html() + '</div>');
 
             // Add URL click event
             if(options.url) {
@@ -467,17 +468,20 @@
                     }
                 };
 
-                // Add success, fail, and warning methods to the handle
+                // Add success, fail, warning, and info methods to the handle
                 $.each([
-                    { state: 'success', className: 'positive' },
-                    { state: 'fail', className: 'negative'},
-                    { state: 'warn', className: 'warn' }
+                    { state: 'success', className: 'positive', iconName: 'icon-smile' },
+                    { state: 'fail', className: 'negative', iconName: 'icon-frown' },
+                    { state: 'warn', className: 'warning', iconName: 'icon-warning-sign'  },
+                    { state: 'neutral', className: 'neutral', iconName: 'icon-info-sign'  }
                 ], function() {
                     var state = this.state;
                     var className = this.className;
+                    var iconName = this.iconName;
                     handle[state] = function(message, delay) {
                         var $item = handle.item;
                         $item.addClass(className);
+                        if(handle.options.icon) $item.prepend('<div class="notification-img"><i aria-hidden="true" class="'+ iconName +'"></i></div>');
                         if(message) updateMessageHTML($item, message);
                         if(delay) this.close(delay);
                         return this;
