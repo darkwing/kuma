@@ -14,8 +14,6 @@
       {% include "socialaccount/snippets/provider_list.html" %}
     {% endwith %}
 
-{% include "socialaccount/snippets/login_extra.html" %}
-
 {% endif %}
   {# hidden form to measure bot submissions from this page #}
   <form class="hidden" method="post" action="{{ url('users.honeypot') }}">
@@ -30,7 +28,7 @@
     <input id="wpRetype" tabindex="5" size="20" placeholder="Enter password again" type="password" name="wpRetype" />
 
     <label for='wpEmail'>Email address (optional)</label>
-    <input id="wpEmail" tabindex="6" size="20" placeholder="Enter yourour email address" type="email" name="wpEmail" />
+    <input id="wpEmail" tabindex="6" size="20" placeholder="Enter your email address" type="email" name="wpEmail" />
 
     <input id="wpCreateaccount" tabindex="10" type="submit" value="Create your account" name="wpCreateaccount" />
   </form>
