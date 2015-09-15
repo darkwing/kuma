@@ -425,4 +425,20 @@
     {{ js('helpfulness', async=True) }}
   {% endif %}
 
+  {% if waffle.flag('section_edit') %}
+    <script type="text/javascript">
+        (function($) {
+            $('article').find('h2, h3, h4, h5, h6').each(function() {
+                $('<a>').attr({
+                    href: '{{ document.get_edit_url() }}#' + $(this).attr('id'),
+                    'class': 'button neutral section-edit'
+                })
+                .text(gettext('Edit'))
+                .append($('<i aria-hidden="true" class="icon-pencil"></i>'))
+                .appendTo(this);
+            });
+        })(jQuery);
+    </script>
+  {% endif %}
+
 {% endblock %}

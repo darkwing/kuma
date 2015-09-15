@@ -215,6 +215,20 @@
       {% include 'wiki/includes/ace_scripts.html' %}
     {% else %}
       {% include 'wiki/includes/ckeditor_scripts.html' %}
+      <script type="text/javascript">
+        if(window.waffle.flag_is_active('section_edit')) CKEDITOR.on('instanceReady', function(evt) {
+            var hash = window.location.hash.replace('#');
+            if(!hash) return;
+
+            var element = evt.editor.document.getById(hash);
+
+            if(element) {
+                element.scrollIntoView();
+            }
+
+            return false;
+        });
+      </script>
     {% endif %}
     {{ js('wiki-edit') }}
 
