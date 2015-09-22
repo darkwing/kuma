@@ -1,19 +1,15 @@
 .section-edit {
-    font-size: 16px;
     float: right;
-    background: rgb(244, 247, 248) none repeat scroll 0% 0%;
-    display: block;
-    padding: 5px 10px;
-    border-radius: 8px;
     margin-left: 20px;
-    font-weight: normal;
     set-smaller-font-size();
-
-    #wikiArticle & {$selector-icon} {
-        bidi-style(margin-left, $icon-margin, margin-right, 0);
-    }
+    opacity: 0;
 
     @media $media-query-mobile {
         display: none;
+    }
+
+    &:focus,
+    h2:hover & {
+        opacity: 1;
     }
 }
